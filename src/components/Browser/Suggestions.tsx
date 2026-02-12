@@ -146,6 +146,12 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
     selectedIndexRef.current = selectedIndex;
   }, [selectedIndex]);
 
+  useEffect(() => {
+    return () => {
+      remoteCacheRef.current.clear();
+    };
+  }, []);
+
   const suggestions = useMemo(() => {
     const trimmed = query.trim();
     const lower = trimmed.toLowerCase();

@@ -3,6 +3,11 @@ import { useEffect, useRef, useState } from 'react';
 export const useIntersectionObserver = (options?: IntersectionObserverInit) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const optionsRef = useRef(options);
+
+  useEffect(() => {
+    optionsRef.current = options;
+  });
 
   useEffect(() => {
     const element = ref.current;
@@ -12,15 +17,15 @@ export const useIntersectionObserver = (options?: IntersectionObserverInit) => {
       ([entry]) => {
         setIsIntersecting(entry.isIntersecting);
       },
-      options
+      optionsRef.current
     );
 
     observer.observe(element);
 
     return () => {
-      observer.unobserve(element);
+      observer.disconnect();
     };
-  }, [options]);
+  }, []);
 
   return { ref, isIntersecting };
 };

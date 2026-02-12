@@ -141,9 +141,14 @@ export class PrecipitationSystem {
 
         this.spawnAccumulator += spawnRate * deltaTime;
 
-        while (this.spawnAccumulator >= 1) {
+        const MAX_PARTICLES = 1000;
+        while (this.spawnAccumulator >= 1 && this.particles.length < MAX_PARTICLES) {
           this.spawnParticle(actualType as 'rain' | 'snow', intensity, typeConfig);
           this.spawnAccumulator -= 1;
+        }
+        
+        if (this.particles.length >= MAX_PARTICLES) {
+          this.spawnAccumulator = 0;
         }
       }
     } else {

@@ -96,6 +96,18 @@ const writeCachedWeather = (key: string, state: WeatherState) => {
         if (item) localStorage.removeItem(item.key);
       });
     }
+
+    const now = Date.now();
+    allKeys.forEach(k => {
+      try {
+        const raw = localStorage.getItem(k);
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as CachedWeatherPayload;
+        if (now - parsed.cachedAt > WEATHER_CACHE_TTL_MS * 2) {
+          localStorage.removeItem(k);
+        }
+      } catch {}
+    });
   } catch {
   }
 };
@@ -348,23 +360,7 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
       return;
     }
 
-    const existing = inFlightByKey.get(cacheKey);
-    if (existing) {
-      existing
-        .then((fresh) => {
-          setError(null);
-          setState(fresh);
-        })
-        .catch(() => {
-          setError('Weather unavailable.');
-        });
-      return;
-    }
-
-    const controller = new AbortController();
-    const referenceDate = new Date();
-
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${resolvedLocation.latitude}&longitude=${resolvedLocation.longitude}&current_weather=true&hourly=precipitation,precipitation_probability,windspeed_10m,visibility,cloudcover&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&windspeed_unit=kmh`;
+    lastFetchAtByKey.set(cacheKey, Date.now());
 
     const request = fetch(url, { signal: controller.signal })
       .then((r) => {
@@ -487,7 +483,14 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
         inFlightByKey.delete(cacheKey);
       });
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      if (lastFetchAtByKey.size > 20) {
+        const entries = Array.from(lastFetchAtByKey.entries());
+        entries.sort((a, b) => a[1] - b[1]);
+        entries.slice(0, 10).forEach(([key]) => lastFetchAtByKey.delete(key));
+      }
+    };
   }, [devWeather.enabled, resolvedLocation]);
 
   const sunPos = getSunPosition(now, state?.latitude ?? 0, state?.longitude ?? 0);

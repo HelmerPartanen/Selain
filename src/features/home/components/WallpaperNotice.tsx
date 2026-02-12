@@ -109,7 +109,7 @@ export const WallpaperNotice: React.FC<WallpaperNoticeProps> = ({
           Personalize Your Space
         </h3>
         <p className="mb-5 text-sm leading-relaxed text-[color:var(--ui-text-muted)]">
-          Make Nook yours with a custom wallpaper or color that reflects your style
+          Make the browser yours with a custom wallpaper or color that reflects your style
         </p>
 
         <button

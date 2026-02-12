@@ -1,4 +1,4 @@
 {
-  "name": "Nook",
+  "name": "Browser",
   "description": "A minimalistic browser built with React and Tailwind, designed for Electron integration. Features glassmorphism, dark/light mode, and tab management."
 }

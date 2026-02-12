@@ -1,5 +1,5 @@
 {
-  "name": "nook",
+  "name": "browser",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -40,8 +40,8 @@
     "wait-on": "^8.0.2"
   },
   "build": {
-    "appId": "com.nook.nookbrowser",
-    "productName": "Nook",
+    "appId": "com.browser.browser",
+    "productName": "Browser",
     "icon": "src/assets/AppIcon.ico",
     "files": [
       "dist/**/*",

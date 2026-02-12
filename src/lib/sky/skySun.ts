@@ -52,18 +52,21 @@ type FlareElement = {
 };
 
 const FLARE_ELEMENTS: FlareElement[] = [
-  { position: 0.12, size: 0.02, color: [1.0, 0.95, 0.8], alpha: 0.5, ca: 0.06, rimBias: 0.2 },
-  { position: 0.22, size: 0.013, color: [1.0, 0.82, 0.55], alpha: 0.4, ca: 0.08, rimBias: 0.35, shape: 'hex' },
-  { position: 0.38, size: 0.035, color: [0.35, 0.9, 0.5], alpha: 0.3, ca: 0.15, rimBias: 0.55 },
-  { position: 0.50, size: 0.02, color: [0.5, 0.88, 1.0], alpha: 0.28, ca: 0.12, rimBias: 0.4, shape: 'hex' },
-  { position: 0.65, size: 0.055, color: [0.3, 0.65, 1.0], alpha: 0.22, ca: 0.2, rimBias: 0.7, shape: 'ring' },
-  { position: 0.78, size: 0.016, color: [0.85, 0.45, 1.0], alpha: 0.25, ca: 0.1, rimBias: 0.3 },
-  { position: 1.0, size: 0.07, color: [1.0, 0.9, 0.82], alpha: 0.14, ca: 0.04, rimBias: 0.1, squeeze: 0.85 },
-  { position: 1.15, size: 0.028, color: [0.82, 0.5, 1.0], alpha: 0.18, ca: 0.18, rimBias: 0.6, shape: 'hex' },
-  { position: 1.35, size: 0.045, color: [0.3, 0.88, 0.6], alpha: 0.13, ca: 0.22, rimBias: 0.65, shape: 'ring' },
-  { position: 1.50, size: 0.017, color: [1.0, 0.55, 0.3], alpha: 0.16, ca: 0.1, rimBias: 0.4 },
-  { position: 1.70, size: 0.075, color: [0.4, 0.55, 1.0], alpha: 0.10, ca: 0.25, rimBias: 0.75, shape: 'ring' },
-  { position: 1.88, size: 0.011, color: [1.0, 0.35, 0.45], alpha: 0.13, ca: 0.08, rimBias: 0.3 },
+  // Warm golden primary flares near the sun
+  { position: 0.12, size: 0.025, color: [1.0, 0.95, 0.75], alpha: 0.45, ca: 0.03, rimBias: 0.15 },
+  { position: 0.22, size: 0.015, color: [1.0, 0.88, 0.65], alpha: 0.38, ca: 0.04, rimBias: 0.25, shape: 'hex' },
+  
+  // Subtle rainbow spectrum (desaturated)
+  { position: 0.38, size: 0.032, color: [0.95, 0.95, 0.70], alpha: 0.32, ca: 0.05, rimBias: 0.4 },
+  { position: 0.50, size: 0.018, color: [0.90, 0.92, 0.85], alpha: 0.28, ca: 0.04, rimBias: 0.3, shape: 'hex' },
+  { position: 0.65, size: 0.048, color: [0.88, 0.90, 0.95], alpha: 0.24, ca: 0.06, rimBias: 0.5, shape: 'ring' },
+  { position: 0.78, size: 0.014, color: [1.0, 0.92, 0.80], alpha: 0.30, ca: 0.03, rimBias: 0.25 },
+  { position: 1.0, size: 0.08, color: [1.0, 0.94, 0.78], alpha: 0.18, ca: 0.02, rimBias: 0.08, squeeze: 0.88 },
+  { position: 1.15, size: 0.024, color: [0.98, 0.90, 0.75], alpha: 0.22, ca: 0.05, rimBias: 0.35, shape: 'hex' },
+  { position: 1.35, size: 0.038, color: [0.85, 0.88, 0.92], alpha: 0.17, ca: 0.07, rimBias: 0.45, shape: 'ring' },
+  { position: 1.50, size: 0.016, color: [1.0, 0.93, 0.82], alpha: 0.20, ca: 0.03, rimBias: 0.3 },
+  { position: 1.70, size: 0.065, color: [0.92, 0.90, 0.88], alpha: 0.14, ca: 0.08, rimBias: 0.55, shape: 'ring' },
+  { position: 1.88, size: 0.012, color: [1.0, 0.96, 0.88], alpha: 0.16, ca: 0.02, rimBias: 0.2 },
 ];
 
 const hexPath = (ctx: CanvasRenderingContext2D, x: number, y: number, r: number, squeeze = 1) => {
@@ -277,19 +280,6 @@ const buildSunSprite = (
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.arc(cx, cy, baseRadius, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  {
-    const spotR = baseRadius * 0.35;
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, spotR);
-    const spotAlpha = 0.4 * masterAlpha * (1 - cloudCover * 0.6);
-    g.addColorStop(0, toRgba([1, 1, 1], spotAlpha));
-    g.addColorStop(1, toRgba([1, 1, 1], 0));
-
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(cx, cy, spotR, 0, Math.PI * 2);
     ctx.fill();
   }
 

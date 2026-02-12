@@ -1,24 +1,29 @@
-
+// Tähdet. Yötaivaan tähtikentän generointi.
 
 export type Star = {
   x: number;
   y: number;
-  baseAlpha: number; 
-  size: number; 
+  baseAlpha: number; // brightness 0..1
+  size: number; // point size (mostly constant)
   color: "cool" | "neutral" | "warm";
-  glow?: number; 
+  glow?: number; // optional halo strength
+  twinkle?: {
+    phase: number;    // 0..2π random offset
+    speed: number;    // radians per second (0.8–3.0)
+    amplitude: number; // 0..1 brightness swing
+  };
 };
 
-
+/* ------------------ utilities ------------------ */
 
 const magnitudeBrightness = (r: number): number => {
-  
+  // Apparent magnitude distribution (inverse power law)
   const magnitude = Math.pow(r, 0.45) * 6;
   return Math.max(0, 1 - magnitude / 6);
 };
 
 const verticalExtinction = (yNorm: number): number => {
-  
+  // Atmospheric extinction near horizon
   return 1 - Math.pow(yNorm, 2.5) * 0.6;
 };
 
@@ -28,7 +33,7 @@ const milkyWayDensity = (
   w: number,
   h: number
 ): number => {
-  
+  // Tilted galactic plane
   const angle = -0.35;
   const cx = x - w / 2;
   const cy = y - h / 2;
@@ -47,7 +52,7 @@ const starColor = (r: number): "cool" | "neutral" | "warm" => {
   return "warm";
 };
 
-
+/* ------------------ generator ------------------ */
 
 export const createStarField = (
   width: number,
@@ -55,12 +60,12 @@ export const createStarField = (
 ): Star[] => {
   const stars: Star[] = [];
 
-  
+  // Density: ~1 star per 1500 px
   const targetStarCount = Math.floor(
     (width * height) / 1500
   );
 
-  
+  // Jittered grid (prevents clustering artifacts)
   const cellSize = Math.sqrt(
     (width * height) / targetStarCount
   );
@@ -74,19 +79,19 @@ export const createStarField = (
 
       const yNorm = y / height;
 
-      
+      // Atmospheric extinction
       if (Math.random() > verticalExtinction(yNorm)) continue;
 
-      
+      // Milky Way density boost
       const mw = milkyWayDensity(x, y, width, height);
       if (Math.random() > 0.75 + mw * 0.6) continue;
 
       const brightness = magnitudeBrightness(Math.random());
 
-      
+      // Cull faintest stars
       if (brightness < 0.045 && Math.random() > 0.015) continue;
 
-      
+      // Realistic star size (almost all are points)
       let size = 0.6;
       if (brightness > 0.9) size = 1.1;
       if (brightness > 0.96) size = 1.4;
@@ -102,16 +107,30 @@ export const createStarField = (
             : "neutral"
       };
 
-      
+      // Bright star halo (rare)
       if (brightness > 0.9) {
         star.glow = brightness * 2.4;
+      }
+
+      // Atmospheric scintillation (twinkle)
+      // Brighter stars near horizon twinkle more — realistic
+      const horizonFactor = Math.pow(yNorm, 1.5); // stronger near bottom
+      const twinkleChance = brightness > 0.3
+        ? 0.08 + horizonFactor * 0.12 + brightness * 0.06
+        : 0.02;
+      if (Math.random() < twinkleChance) {
+        star.twinkle = {
+          phase: Math.random() * Math.PI * 2,
+          speed: 0.8 + Math.random() * 2.2,
+          amplitude: 0.3 + Math.random() * 0.5 * (0.5 + brightness * 0.5),
+        };
       }
 
       stars.push(star);
     }
   }
 
-  
+  /* --------- rare bright anchor stars --------- */
 
   const brightStarCount = Math.max(3, Math.floor(stars.length / 300));
   for (let i = 0; i < brightStarCount; i++) {
@@ -124,7 +143,12 @@ export const createStarField = (
       baseAlpha: 0.8 + Math.random() * 0.2,
       size: 1.5,
       glow: 3.0,
-      color: starColor(Math.random())
+      color: starColor(Math.random()),
+      twinkle: Math.random() < 0.6 ? {
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.6 + Math.random() * 1.5,
+        amplitude: 0.25 + Math.random() * 0.35,
+      } : undefined,
     });
   }
 

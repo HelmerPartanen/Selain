@@ -26,7 +26,7 @@ const settingsSections: { id: SettingsSection; label: string }[] = [
   { id: 'advanced', label: 'Advanced' }
 ];
 
-export const SettingsPage = memo<React.FC<any>>(({
+export const SettingsPage = memo(({
   wallpaper,
   onWallpaperChange,
   wallpaperColor,
@@ -47,7 +47,7 @@ export const SettingsPage = memo<React.FC<any>>(({
   onSave,
   onClose,
   subsection
-}) => {
+}: any) => {
   const [activeSection, setActiveSection] =
     useState<SettingsSection>(initialSection ?? 'appearance');
 

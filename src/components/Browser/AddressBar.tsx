@@ -244,7 +244,7 @@ const AddressBarInner: React.FC<AddressBarProps> = ({
               {isWelcome ? (
                 <LuSearch size={12} />
               ) : secure ? (
-                <LuLock size={12} className="text-green-800" />
+                <LuLock size={12} className="text-green-400" />
               ) : (
                 <span title="Connection is not secure" aria-label="Connection is not secure">
                   <LuTriangleAlert size={12} />

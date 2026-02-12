@@ -333,7 +333,7 @@ export class SkyCloudsRenderer {
           if (uLightningIntensity > 0.01) {
             vec3 lightningColor = vec3(1.0, 1.0, 0.95);
             float lightningGlow = uLightningIntensity * d * 2.0;
-            cloudColor = mix(cloudColor, lightningColor, clamp(lightningGlow, 0.0, 0.8));
+            cloudColor = mix(cloudColor, lightningColor, clamp(lightningGlow, 0.0, 0.2));
           }
 
           // Forward scattering

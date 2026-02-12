@@ -583,6 +583,15 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
           <div className="flex-1">
             <div className="text-4xl font-light tracking-tight">{state.temperature}</div>
             <div className="mt-1 text-base font-medium text-white/90">{state.condition}</div>
+            
+            <div className="flex gap-2 mt-3">
+              <div className="flex-shrink-0 flex items-center justify-center">
+                <div className="text-base">
+                  <div className="text-sm text-white/70 font-medium leading-tight">Wind</div>
+                  <div className="text-sm font-light text-white leading-tight">{state.windSpeed ? `${Math.round(state.windSpeed)}` : '-'} km/h</div>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="ml-4 opacity-90">
             <WeatherIcon code={state.code} />

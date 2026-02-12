@@ -557,7 +557,7 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
 
   if (!isIntersecting) {
     return (
-      <div ref={ref} className="h-full w-full bg-gray-200 rounded-3xl flex items-center justify-center">
+      <div ref={ref} className="h-full w-full bg-gray-200 rounded-3xl flex items-center justify-center overflow-hidden">
         <div className="text-gray-500 text-sm">Weather</div>
       </div>
     );

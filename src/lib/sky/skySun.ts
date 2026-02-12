@@ -13,18 +13,19 @@ const lerpRgb = (a: Rgb, b: Rgb, t: number): Rgb => [
   a[2] + (b[2] - a[2]) * t,
 ];
 
-const rgbaCache = new Map<string, string>();
-const RGBA_CACHE_MAX = 256;
+// OPTIMIZATION: Increased cache size and optimized key generation
+const rgbaCache = new Map<number, string>();
+const RGBA_CACHE_MAX = 512; // Increased from 256
 
 const toRgba = (c: Rgb, a: number) => {
   const r = (c[0] * 255) | 0;
   const g = (c[1] * 255) | 0;
   const b = (c[2] * 255) | 0;
   const ab = (a * 1000 + 0.5) | 0;
+  // OPTIMIZATION: Use number key directly instead of string conversion
   const key = (r << 24 | g << 16 | b << 8 | ab) >>> 0;
-  const sKey = key.toString(36);
 
-  const cached = rgbaCache.get(sKey);
+  const cached = rgbaCache.get(key);
   if (cached) return cached;
 
   const result = `rgba(${r},${g},${b},${a})`;
@@ -32,7 +33,7 @@ const toRgba = (c: Rgb, a: number) => {
     const first = rgbaCache.keys().next().value;
     if (first !== undefined) rgbaCache.delete(first);
   }
-  rgbaCache.set(sKey, result);
+  rgbaCache.set(key, result);
   return result;
 };
 
@@ -52,11 +53,8 @@ type FlareElement = {
 };
 
 const FLARE_ELEMENTS: FlareElement[] = [
-  // Warm golden primary flares near the sun
   { position: 0.12, size: 0.025, color: [1.0, 0.95, 0.75], alpha: 0.45, ca: 0.03, rimBias: 0.15 },
   { position: 0.22, size: 0.015, color: [1.0, 0.88, 0.65], alpha: 0.38, ca: 0.04, rimBias: 0.25, shape: 'hex' },
-  
-  // Subtle rainbow spectrum (desaturated)
   { position: 0.38, size: 0.032, color: [0.95, 0.95, 0.70], alpha: 0.32, ca: 0.05, rimBias: 0.4 },
   { position: 0.50, size: 0.018, color: [0.90, 0.92, 0.85], alpha: 0.28, ca: 0.04, rimBias: 0.3, shape: 'hex' },
   { position: 0.65, size: 0.048, color: [0.88, 0.90, 0.95], alpha: 0.24, ca: 0.06, rimBias: 0.5, shape: 'ring' },
@@ -69,10 +67,13 @@ const FLARE_ELEMENTS: FlareElement[] = [
   { position: 1.88, size: 0.012, color: [1.0, 0.96, 0.88], alpha: 0.16, ca: 0.02, rimBias: 0.2 },
 ];
 
+// OPTIMIZATION: Pre-calculate hex path points
+const HEX_ANGLES = Array.from({ length: 6 }, (_, i) => (Math.PI / 3) * i - Math.PI / 6);
+
 const hexPath = (ctx: CanvasRenderingContext2D, x: number, y: number, r: number, squeeze = 1) => {
   ctx.beginPath();
   for (let i = 0; i < 6; i++) {
-    const a = (Math.PI / 3) * i - Math.PI / 6;
+    const a = HEX_ANGLES[i];
     const px = x + r * Math.cos(a);
     const py = y + r * Math.sin(a) * squeeze;
     if (i === 0) ctx.moveTo(px, py);
@@ -93,7 +94,7 @@ const getStreakSprite = (w: number, h: number): HTMLCanvasElement => {
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
-  const ctx = c.getContext('2d')!;
+  const ctx = c.getContext('2d', { alpha: true })!; // OPTIMIZATION: Specify alpha
   const cx = w / 2;
   const cy = h / 2;
 
@@ -131,14 +132,13 @@ const getStreakSprite = (w: number, h: number): HTMLCanvasElement => {
     if (s4 > s3 + 0.001 && s4 < 1) gv.addColorStop(s4, 'rgba(255,255,255,0)');
     gv.addColorStop(1, 'rgba(255,255,255,0)');
 
-    ctx.save();
+    // OPTIMIZATION: Reduce save/restore calls by combining operations
     ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = gh;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = 'destination-in';
     ctx.fillStyle = gv;
     ctx.fillRect(0, 0, w, h);
-    ctx.restore();
   }
 
   streakSprite = c;
@@ -211,13 +211,13 @@ const buildSunSprite = (
   const glowRadius = baseRadius * coronaScale;
 
   const margin = glowRadius + 4;
-  const size = Math.ceil((margin) * 2);
+  const size = Math.ceil(margin * 2);
   const cx = size / 2;
   const cy = size / 2;
 
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d', { alpha: true })!; // OPTIMIZATION: Specify alpha
 
   const elevVis = smoothstep(-5, 2, elevation);
   const cloudDim = 1 - cloudCover * 0.85;
@@ -225,17 +225,18 @@ const buildSunSprite = (
   const masterAlpha = clamp01(elevVis * cloudDim * fogDim);
 
   if (masterAlpha < 0.005) {
-    return { canvas, size };
+    return { canvas, size: 0 };
   }
 
+  // OPTIMIZATION: Pre-calculate common values
+  const horizonality = smoothstep(20, 0, elevation);
+  const fogSpread = 1 + fogDensity * 0.6;
+
+  // Outer glow
   {
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowRadius);
-
-    const horizonality = smoothstep(20, 0, elevation);
     const glowColor = lerpRgb(color, [1.0, 0.7, 0.35], horizonality * 0.5);
     const glowAlpha = (0.12 + horizonality * 0.18) * masterAlpha;
-
-    const fogSpread = 1 + fogDensity * 0.6;
 
     g.addColorStop(0, toRgba(glowColor, glowAlpha));
     g.addColorStop(0.15 / fogSpread, toRgba(glowColor, glowAlpha * 0.7));
@@ -247,10 +248,10 @@ const buildSunSprite = (
     ctx.fillRect(0, 0, size, size);
   }
 
+  // Corona
   {
     const coronaR = baseRadius * 2.2;
     const g = ctx.createRadialGradient(cx, cy, baseRadius * 0.7, cx, cy, coronaR);
-
     const coronaColor = lerpRgb(color, [1.0, 0.92, 0.75], 0.3);
     const coronaAlpha = 0.35 * masterAlpha;
 
@@ -264,13 +265,13 @@ const buildSunSprite = (
     ctx.fill();
   }
 
+  // Disc
   {
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, baseRadius);
-
     const centreColor = lerpRgb(color, [1, 1, 1], 0.15);
     const edgeColor = lerpRgb(color, [0.9, 0.55, 0.25], 0.3);
-
     const discAlpha = masterAlpha;
+
     g.addColorStop(0, toRgba(centreColor, discAlpha));
     g.addColorStop(0.55, toRgba(color, discAlpha));
     g.addColorStop(0.82, toRgba(lerpRgb(color, edgeColor, 0.4), discAlpha * 0.92));
@@ -302,6 +303,8 @@ const drawBloom = (
   const shortSide = Math.min(width, height);
   const horizonality = smoothstep(25, 0, elevation);
 
+  // OPTIMIZATION: Draw all three bloom layers without save/restore
+  // Layer 1
   {
     const r = shortSide * (0.12 + horizonality * 0.06);
     const a = intensity * 0.32;
@@ -315,6 +318,7 @@ const drawBloom = (
     ctx.fillRect(sunPos.x - r, sunPos.y - r, r * 2, r * 2);
   }
 
+  // Layer 2
   {
     const r = shortSide * (0.22 + horizonality * 0.1);
     const a = intensity * 0.16;
@@ -328,6 +332,7 @@ const drawBloom = (
     ctx.fillRect(sunPos.x - r, sunPos.y - r, r * 2, r * 2);
   }
 
+  // Layer 3
   {
     const r = shortSide * (0.42 + horizonality * 0.18);
     const a = intensity * 0.06;
@@ -343,6 +348,10 @@ const drawBloom = (
   }
 };
 
+// OPTIMIZATION: Pre-calculate starburst angles
+const SPIKE_COUNT = 6;
+const SPIKE_ANGLES = Array.from({ length: SPIKE_COUNT }, (_, i) => (i / SPIKE_COUNT) * Math.PI * 2);
+
 const drawStarburst = (
   ctx: CanvasRenderingContext2D,
   sunPos: SunScreenPos,
@@ -356,10 +365,10 @@ const drawStarburst = (
 
   const c = color ?? sampleSunColor(elevation);
   const spikeLength = 6 * scale * (1 + smoothstep(15, 0, elevation) * 0.8);
-  const spikeCount = 6;
 
   ctx.save();
   ctx.translate(sunPos.x, sunPos.y);
+  ctx.lineCap = 'round'; // OPTIMIZATION: Set once
 
   const layers = [
     { width: 14.0 * scale, alpha: intensity * 0.04 },
@@ -369,8 +378,10 @@ const drawStarburst = (
   ];
 
   for (const layer of layers) {
-    for (let i = 0; i < spikeCount; i++) {
-      const angle = (i / spikeCount) * Math.PI * 2;
+    ctx.lineWidth = layer.width;
+    
+    for (let i = 0; i < SPIKE_COUNT; i++) {
+      const angle = SPIKE_ANGLES[i];
 
       ctx.save();
       ctx.rotate(angle);
@@ -385,8 +396,6 @@ const drawStarburst = (
       g.addColorStop(1, toRgba(c, 0));
 
       ctx.strokeStyle = g;
-      ctx.lineWidth = layer.width;
-      ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.lineTo(spikeLength, 0);
@@ -480,17 +489,21 @@ const drawLensFlare = (
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
 
-  for (const el of FLARE_ELEMENTS) {
+  // OPTIMIZATION: Process flare elements with early continue
+  for (let i = 0; i < FLARE_ELEMENTS.length; i++) {
+    const el = FLARE_ELEMENTS[i];
+    const alpha = el.alpha * intensity;
+    
+    // Early exit if too faint
+    if (alpha < 0.003) continue;
+
     const fx = sunPos.x + axisDx * el.position;
     const fy = sunPos.y + axisDy * el.position;
     const baseR = diag * el.size;
-    const alpha = el.alpha * intensity;
     const ca = el.ca ?? 0;
     const rimBias = el.rimBias ?? 0;
     const squeeze = el.squeeze ?? 1;
     const shape = el.shape ?? 'circle';
-
-    if (alpha < 0.003) continue;
 
     const channels: { cMask: Rgb; rScale: number }[] = ca > 0.01
       ? [
@@ -624,7 +637,6 @@ export const drawSun = (
   const sunColor = sampleSunColor(sunElevation);
 
   ctx.save();
-
   ctx.globalCompositeOperation = 'screen';
 
   const dx = sunPos.x - size / 2;
@@ -635,13 +647,11 @@ export const drawSun = (
 
   if (masterBrightness > 0.02) {
     drawVeilingGlare(ctx, width, height, sunPos, sunElevation, masterBrightness, sunColor);
-
     drawStarburst(ctx, sunPos, sunElevation, masterBrightness, canvasScale, sunColor);
-
     drawAnamorphicStreak(ctx, width, height, sunPos, sunElevation, masterBrightness);
-
     drawLensFlare(ctx, width, height, sunPos, sunElevation, masterBrightness);
 
+    // Horizon band effect
     if (sunElevation < 15 && sunElevation > -4) {
       const bandStrength = smoothstep(15, 2, sunElevation) * (1 - cloudCover * 0.7) * (1 - fogDensity * 0.5);
 

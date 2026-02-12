@@ -35,7 +35,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   theme: Theme.SYSTEM,
   searchEngine: SearchEngine.GOOGLE,
   customSearchUrl: '',
-  backgroundType: 'wallpaper',
+  backgroundType: 'solid',
     wallpaper: '',
     wallpaperColor: DEFAULT_WALLPAPER_COLOR,
   wallpaperBlur: false,

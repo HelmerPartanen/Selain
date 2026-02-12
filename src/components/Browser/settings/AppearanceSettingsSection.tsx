@@ -80,7 +80,7 @@ export const AppearanceSettingsSection: React.FC<
             </div>
 
             {}
-            <div className="mx-auto w-full max-w-4xl overflow-x-hidden">
+            <div className="mx-auto w-full max-w-2xl overflow-x-hidden">
               <div className="relative isolate aspect-video overflow-hidden rounded-3xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface-subtle)]">
                 {activeWallpaper ? (
                   <div

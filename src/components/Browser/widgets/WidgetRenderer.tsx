@@ -20,7 +20,7 @@ const WidgetRendererInner: React.FC<WidgetRendererProps> = ({ widget, onRemove }
   }
 
   return (
-    <div className="group relative flex h-full w-full flex-col overflow-visible bg-[color:var(--ui-surface)] shadow-md rounded-3xl">
+    <div className="group relative flex h-full w-full flex-col overflow-visible bg-[color:var(--ui-surface)] shadow-md rounded-3xl overflow-hidden border border-[color:var(--ui-border)]">
       <button
         type="button"
         onClick={() => onRemove(widget.id)}

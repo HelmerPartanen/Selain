@@ -362,6 +362,24 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
 
     lastFetchAtByKey.set(cacheKey, Date.now());
 
+    const existing = inFlightByKey.get(cacheKey);
+    if (existing) {
+      existing
+        .then((fresh) => {
+          setError(null);
+          setState(fresh);
+        })
+        .catch(() => {
+          setError('Weather unavailable.');
+        });
+      return;
+    }
+
+    const controller = new AbortController();
+    const referenceDate = new Date();
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${resolvedLocation.latitude}&longitude=${resolvedLocation.longitude}&current_weather=true&hourly=precipitation,precipitation_probability,windspeed_10m,visibility,cloudcover&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&windspeed_unit=kmh`;
+
     const request = fetch(url, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error('weather_fetch_failed');

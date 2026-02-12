@@ -8,7 +8,7 @@ import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { SuggestionsBar } from '@/components/Browser/Suggestions';
 import { WindowControls } from '@/components/Browser/WindowControls';
 import { PermissionModal } from '@/components/Browser/PermissionModal';
-import { SpotlightSearch } from '@/components/Browser/SpotlightSearch';
+
 import { AppSettings, HistoryItem, SearchEngine, Tab, Theme, PermissionRequest } from '@/lib/types';
 import { INITIAL_TABS } from '@/lib/constants';
 import { BrowserToolbar } from '@/features/home/components/BrowserToolbar';
@@ -50,7 +50,7 @@ const Home: React.FC = () => {
   const [lastExternalUrlById, setLastExternalUrlById] = useState<Record<string, string>>({});
   const [historyOpen, setHistoryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [spotlightOpen, setSpotlightOpen] = useState(false);
+
   const [settingsSection, setSettingsSection] = useState<
     'appearance' | 'general' | 'search' | 'privacy' | 'advanced'
   >('appearance');
@@ -325,10 +325,10 @@ const Home: React.FC = () => {
   }, [handlePermissionRequest]);
 
   useEffect(() => {
-    if (!window.electronAPI?.onSpotlightOpen) return undefined;
-    return window.electronAPI.onSpotlightOpen(() => {
+    if (!window.electronAPI?.onFocusAddressBar) return undefined;
+    return window.electronAPI.onFocusAddressBar(() => {
       handleNewTab();
-      setSpotlightOpen(true);
+      setTimeout(() => window.dispatchEvent(new CustomEvent('browser-focus-address-bar')), 100);
     });
   }, [handleNewTab]);
 
@@ -703,7 +703,7 @@ const Home: React.FC = () => {
       if (event.ctrlKey && event.key === 't') {
         event.preventDefault();
         handleNewTab();
-        setSpotlightOpen(true);
+        setTimeout(() => window.dispatchEvent(new CustomEvent('browser-focus-address-bar')), 100);
       }
       
       else if (event.ctrlKey && event.key === 'w') {
@@ -951,16 +951,7 @@ const Home: React.FC = () => {
         onClose={handleClosePermissionModal}
       />
 
-      <SpotlightSearch
-        isOpen={spotlightOpen}
-        onClose={() => setSpotlightOpen(false)}
-        onNavigate={handleNavigate}
-        searchEngine={savedSettings.searchEngine}
-        tabs={tabs}
-        historyItems={historyItems}
-        historySorted={historySorted}
-        topSites={topSites}
-      />
+
     </div>
   );
 };

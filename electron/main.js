@@ -426,7 +426,7 @@ app.whenReady().then(async () => {
     
     
     globalShortcut.register('CommandOrControl+T', () => {
-      mainWindow?.webContents.send('spotlight:open');
+      mainWindow?.webContents.send('browser:focus-address-bar');
     });
     
     

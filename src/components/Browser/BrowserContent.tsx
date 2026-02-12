@@ -136,7 +136,6 @@ export const BrowserContent = forwardRef<BrowserContentHandle, BrowserContentPro
                 ref={attachWebview(tab.id)}
                 src={tab.url}
                 className="w-full h-full"
-                allowpopups={true}
               />
             </div>
           );

@@ -6,9 +6,10 @@ import { PRECIPITATION_CONFIG, PrecipitationType } from './precipitationConfig';
 class PerlinNoiseGenerator {
   private seeds: number[] = [];
   private currentTime: number = 0;
+  private currentValue: number = 0;
+  private lastScale: number = 0;
 
   constructor() {
-    
     for (let i = 0; i < 4; i++) {
       this.seeds[i] = Math.random() * 256;
     }
@@ -22,13 +23,12 @@ class PerlinNoiseGenerator {
     const t = this.currentTime;
     const s = scale;
 
-    
     let value = 0;
     value += Math.sin((x * 0.005 + t * 0.3) / s) * 0.5;
     value += Math.sin((y * 0.008 + t * 0.2) / s) * 0.3;
     value += Math.sin((x * y * 0.0001 + t * 0.15) / s) * 0.2;
 
-    return (value + 1) / 2; 
+    return (value + 1) / 2;
   }
 }
 
@@ -77,45 +77,43 @@ export class PrecipitationSystem {
   update(deltaTime: number, precipitationType: 'rain' | 'snow' | 'storm' | 'none', intensity: 'light' | 'moderate' | 'heavy' = 'moderate') {
     this.noiseGenerator.update(deltaTime, this.config.motionNoise.speed);
 
-    
+    const dt = Math.min(0.033, deltaTime);
+    const MAX_PARTICLES = 1000;
+
+    let validParticles = 0;
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
-      p.age += deltaTime;
+      p.age += dt;
 
-      
       if (p.age >= p.lifetime || p.y > this.height) {
         this.particles.splice(i, 1);
         continue;
       }
 
-      
-      p.x += p.vx * deltaTime;
-      p.y += p.vy * deltaTime;
+      validParticles++;
 
-      
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+
       const noiseInfluence = this.config.motionNoise.scale;
       const noise = this.noiseGenerator.getValue(p.x, p.y, noiseInfluence);
-      const noiseOffset = (noise - 0.5) * 2; 
+      const noiseOffset = (noise - 0.5) * 2;
 
       if (p.type === 'rain') {
-        
         const baseDrift = 20;
         const windDrift = this.windStrength * Math.cos(this.windAngleRadians) * baseDrift;
-        p.vx += (windDrift + noiseOffset * baseDrift) * deltaTime; 
+        p.vx += (windDrift + noiseOffset * baseDrift) * dt;
       } else {
-        
         const baseDrift = this.config.types.snow.intensityLevels[intensity].drift || 15;
         const windDrift = this.windStrength * Math.cos(this.windAngleRadians) * baseDrift;
-        p.vx = windDrift * 0.5 + noiseOffset * baseDrift * deltaTime;
+        p.vx = windDrift * 0.5 + noiseOffset * baseDrift * dt;
 
-        
         if (this.config.types.snow.rotation) {
-          p.rotation += p.rotationVelocity * deltaTime;
-          p.rotation %= Math.PI * 2;
+          p.rotation += p.rotationVelocity * dt;
+          if (p.rotation > Math.PI * 2) p.rotation -= Math.PI * 2;
         }
       }
 
-      
       const fadeInDuration = 0.2;
       const fadeOutDuration = 0.3;
       let fadeMultiplier = 1;
@@ -129,29 +127,22 @@ export class PrecipitationSystem {
       p.opacity *= this.config.rendering.softEdges ? fadeMultiplier : 1;
     }
 
-    
-    if (precipitationType !== 'none') {
-      
+    if (precipitationType !== 'none' && validParticles < MAX_PARTICLES) {
       const actualType = precipitationType === 'storm' ? 'rain' : precipitationType;
       const typeConfig = this.config.types[actualType];
-      
+
       if (typeConfig) {
         const intensityConfig = typeConfig.intensityLevels[intensity];
         const spawnRate = intensityConfig.spawnRate;
 
-        this.spawnAccumulator += spawnRate * deltaTime;
+        this.spawnAccumulator += spawnRate * dt;
 
-        const MAX_PARTICLES = 1000;
         while (this.spawnAccumulator >= 1 && this.particles.length < MAX_PARTICLES) {
           this.spawnParticle(actualType as 'rain' | 'snow', intensity, typeConfig);
           this.spawnAccumulator -= 1;
         }
-        
-        if (this.particles.length >= MAX_PARTICLES) {
-          this.spawnAccumulator = 0;
-        }
       }
-    } else {
+    } else if (precipitationType === 'none') {
       this.spawnAccumulator = 0;
     }
   }

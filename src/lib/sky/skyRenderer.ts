@@ -9,8 +9,36 @@ import { overlayNoise } from './skyNoise';
 import { drawStars } from './skyStarRenderer';
 import { drawThunderstormWithEffect } from './skyLightning';
 
+type CachedGradient = {
+  width: number;
+  height: number;
+  layers: SkyLayerColors;
+  gradient: CanvasGradient;
+};
 
+let cachedGradient: CachedGradient | null = null;
 
+const getSkyGradient = (
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  layers: SkyLayerColors
+): CanvasGradient => {
+  if (cachedGradient &&
+    cachedGradient.width === width &&
+    cachedGradient.height === height &&
+    cachedGradient.layers === layers) {
+    return cachedGradient.gradient;
+  }
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  gradient.addColorStop(0, toCssRgb(layers.upperSky));
+  gradient.addColorStop(0.55, toCssRgb(layers.midSky));
+  gradient.addColorStop(1, toCssRgb(layers.horizonBand));
+
+  cachedGradient = { width, height, layers, gradient };
+  return gradient;
+};
 
 export const renderSkyGradient = (
   ctx: CanvasRenderingContext2D,
@@ -25,20 +53,14 @@ export const renderSkyGradient = (
   const { sunElevation, sunAzimuth } = state.astronomy;
   const cloudCover = clamp01(state.weather.cloudCover);
   const fogDensity = clamp01(state.weather.fogDensity);
-  const windSpeed = state.weather.windSpeed ?? 0;
 
-  
-  const gradient = ctx.createLinearGradient(0, 0, 0, height);
-  gradient.addColorStop(0, toCssRgb(layers.upperSky));
-  gradient.addColorStop(0.55, toCssRgb(layers.midSky));
-  gradient.addColorStop(1, toCssRgb(layers.horizonBand));
+  const gradient = getSkyGradient(ctx, width, height, layers);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 
   const hasSunGlow = sunElevation > -18;
   const sunPos = hasSunGlow ? getSunScreenPosition(width, height, sunAzimuth, sunElevation) : undefined;
 
-  
   let sunVisibility = 0;
   if (hasSunGlow && sunPos) {
     sunVisibility = Math.max(0.1, 1 - cloudCover);
@@ -58,7 +80,6 @@ export const renderSkyGradient = (
       ctx.fillRect(0, 0, width, height);
       ctx.restore();
 
-      
       drawSun(
         ctx,
         width,
@@ -72,10 +93,8 @@ export const renderSkyGradient = (
     }
   }
 
-  
   drawStars(ctx, width, height, sunElevation, cloudCover, time);
 
-  
   const isStorm = state.weather.precipitation === 'storm';
   const stormIntensity = isStorm ? 1 : 0;
   let lightningEffect = null;
@@ -83,10 +102,8 @@ export const renderSkyGradient = (
     lightningEffect = drawThunderstormWithEffect(ctx, width, height, stormIntensity, layers.midSky, time);
   }
 
-  
   drawAtmosphere(ctx, width, height, layers, fogDensity, cloudCover, sunElevation, sunPos, sunVisibility, lightningEffect);
 
-  
   const groundVisibility = Math.max(0, 1 - fogDensity);
   if (groundVisibility > 0.05) {
     const groundGrad = ctx.createLinearGradient(0, height * 1, 0, height);

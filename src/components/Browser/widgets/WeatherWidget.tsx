@@ -143,6 +143,57 @@ const isValidLocation = (value: WeatherLocation | null) =>
   typeof value.latitude === 'number' &&
   typeof value.longitude === 'number';
 
+const getStoredLocation = () => {
+  try {
+    const raw = localStorage.getItem(WEATHER_LOCATION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as WeatherLocation;
+    return isValidLocation(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const deriveCloudCover = (code: number) => {
+  if (code === 0) return 0.05;
+  if (code <= 2) return 0.35;
+  if (code === 3) return 0.75;
+  if (code === 45 || code === 48) return 0.6;
+  if (code >= 51 && code <= 67) return 0.65;
+  if (code >= 71 && code <= 77) return 0.5;
+  if (code >= 80 && code <= 82) return 0.65;
+  if (code >= 85 && code <= 86) return 0.6;
+  if (code >= 95) return 0.85;
+  return 0.45;
+};
+
+const derivePrecipitation = (code: number, precipitationValue?: number) => {
+  if (code >= 95) return 'storm';
+  if (code >= 71 && code <= 86) return 'snow';
+  if (code >= 51 && code <= 67) return 'rain';
+  if (code >= 80 && code <= 82) return 'rain';
+  if (typeof precipitationValue === 'number' && precipitationValue > 0) return 'rain';
+  return 'none';
+};
+
+const deriveVisibilityKm = (value?: number) => {
+  if (!Number.isFinite(value)) return undefined;
+  return Math.max(0.5, value / 1000);
+};
+
+const deriveFogDensity = (code: number, visibilityKm?: number) => {
+  if (code === 45 || code === 48) return 0.8;
+  if (!visibilityKm) return 0.2;
+  const linear = Math.min(1, Math.max(0, 1 - visibilityKm / 14));
+  return Math.min(0.7, Math.max(0, linear * linear));
+};
+
+const parseTime = (value?: string) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+};
 
 const weatherCodeToLabel = (code: number) => {
   if (code === 0) return 'Clear';
@@ -179,63 +230,10 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
     location ?? null
   );
   const [error, setError] = useState<string | null>(null);
-  const [locationLoading, setLocationLoading] = useState(false);
   const devPanel = useDevPanelState();
   const devWeather = devPanel.weather;
   const now = useDevTime();
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
-
-  const getStoredLocation = () => {
-    try {
-      const raw = localStorage.getItem(WEATHER_LOCATION_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as WeatherLocation;
-      return isValidLocation(parsed) ? parsed : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const deriveCloudCover = (code: number) => {
-    if (code === 0) return 0.05;
-    if (code <= 2) return 0.35;
-    if (code === 3) return 0.75;
-    if (code === 45 || code === 48) return 0.6;
-    if (code >= 51 && code <= 67) return 0.65;
-    if (code >= 71 && code <= 77) return 0.5;
-    if (code >= 80 && code <= 82) return 0.65;
-    if (code >= 85 && code <= 86) return 0.6;
-    if (code >= 95) return 0.85;
-    return 0.45;
-  };
-
-  const derivePrecipitation = (code: number, precipitationValue?: number) => {
-    if (code >= 95) return 'storm';
-    if (code >= 71 && code <= 86) return 'snow';
-    if (code >= 51 && code <= 67) return 'rain';
-    if (code >= 80 && code <= 82) return 'rain';
-    if (typeof precipitationValue === 'number' && precipitationValue > 0) return 'rain';
-    return 'none';
-  };
-
-  const deriveVisibilityKm = (value?: number) => {
-    if (!Number.isFinite(value)) return undefined;
-    return Math.max(0.5, value / 1000);
-  };
-
-  const deriveFogDensity = (code: number, visibilityKm?: number) => {
-    if (code === 45 || code === 48) return 0.8;
-    if (!visibilityKm) return 0.2;
-    const linear = Math.min(1, Math.max(0, 1 - visibilityKm / 14));
-    return Math.min(0.7, Math.max(0, linear * linear));
-  };
-
-  const parseTime = (value?: string) => {
-    if (!value) return null;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-    return date;
-  };
 
   useEffect(() => {
     const storedLocation = getStoredLocation();
@@ -326,18 +324,12 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
 
     setError('Set a location in settings to see weather.');
   }, [
-    devWeather.code,
     devWeather.enabled,
-    devWeather.high,
-    devWeather.location,
-    devWeather.low,
+    devWeather.code,
     devWeather.temperature,
-    devWeather.cloudCover,
-    devWeather.visibility,
-    devWeather.fogDensity,
-    devWeather.sunrise,
-    devWeather.sunset,
-    devWeather.precipitation,
+    devWeather.high,
+    devWeather.low,
+    devWeather.location,
     location
   ]);
 
@@ -546,13 +538,10 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
       }
     };
   }, [
-    now,
     state,
+    now,
     devWeather.enabled,
-    devWeather.season,
-    sunPos.azimuth,
-    sunPos.elevation,
-    moonPhase
+    devWeather.season
   ]);
 
   if (!isIntersecting) {

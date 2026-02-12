@@ -45,7 +45,8 @@ export const useSkyBackground = (state: SkyStateInput) => {
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const stateRef = useRef(state);
   const precipitationSystemRef = useRef<PrecipitationSystem | null>(null);
-  const cloudsRendererRef = useRef<SkyCloudsRenderer | null>(null); 
+  const cloudsRendererRef = useRef<SkyCloudsRenderer | null>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
   useEffect(() => {
     targetRef.current = computeSkyLayers(state);
@@ -55,7 +56,16 @@ export const useSkyBackground = (state: SkyStateInput) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = getCanvasContext(canvas);
+    
+    if (!ctxRef.current) {
+      const context = canvas.getContext(
+        '2d',
+        { willReadFrequently: false } as CanvasRenderingContext2DSettings
+      );
+      ctxRef.current = context ?? canvas.getContext('2d');
+    }
+    
+    const ctx = ctxRef.current;
     if (!ctx) return;
 
     const updateSize = () => {
@@ -91,19 +101,20 @@ export const useSkyBackground = (state: SkyStateInput) => {
 
     let raf = 0;
     let last = performance.now();
+    let lastCloudRender = 0;
+    const CLOUD_RENDER_INTERVAL = 250;
+
     const animate = (now: number) => {
-      const dt = Math.min(200, now - last);
+      const dt = Math.min(33, now - last);
       last = now;
 
       const smoothing = 1 - Math.exp(-dt / 400);
       currentRef.current = blendLayers(currentRef.current, targetRef.current, smoothing);
 
       const { width, height } = sizeRef.current;
-      
-      
+
       const skyResult = renderSkyGradient(ctx, width, height, currentRef.current, stateRef.current, now);
 
-      
       if (!precipitationSystemRef.current) {
         precipitationSystemRef.current = new PrecipitationSystem(width, height, stateRef.current.weather.windSpeed || 0, stateRef.current.weather.windDirection || 0);
       }
@@ -112,38 +123,40 @@ export const useSkyBackground = (state: SkyStateInput) => {
       const precipitation = stateRef.current.weather.precipitation;
       const precipIntensity = mapPrecipitationToIntensity(stateRef.current.weather);
 
-      
       precipSystem.updateWind(stateRef.current.weather.windSpeed || 0, stateRef.current.weather.windDirection || 0);
       precipSystem.update(dt / 1000, precipitation, precipIntensity);
       renderPrecipitation(ctx, precipSystem, precipitation, precipIntensity, currentRef.current);
 
-      
       const cloudCover = stateRef.current.weather.cloudCover;
-      if (cloudCover > 0) {
-        if (!cloudsRendererRef.current) {
-          const cloudsCanvas = cloudsCanvasRef.current;
-          if (cloudsCanvas) {
-            try {
-              cloudsRendererRef.current = new SkyCloudsRenderer(cloudsCanvas);
-            } catch (e) {
-              console.warn('WebGL not supported for clouds:', e);
+      if (cloudCover > 0.01) {
+        const timeSinceCloudRender = now - lastCloudRender;
+        if (timeSinceCloudRender >= CLOUD_RENDER_INTERVAL) {
+          lastCloudRender = now;
+
+          if (!cloudsRendererRef.current) {
+            const cloudsCanvas = cloudsCanvasRef.current;
+            if (cloudsCanvas) {
+              try {
+                cloudsRendererRef.current = new SkyCloudsRenderer(cloudsCanvas);
+              } catch (e) {
+              }
             }
           }
-        }
-        if (cloudsRendererRef.current) {
-          cloudsRendererRef.current.render(
-            now / 1000,
-            width,
-            height,
-            currentRef.current.upperSky,
-            currentRef.current.midSky,
-            currentRef.current.horizonBand,
-            stateRef.current.astronomy.sunElevation,
-            {
-              ...stateRef.current.weather,
-              lightningEffect: skyResult.lightningEffect
-            }
-          );
+          if (cloudsRendererRef.current) {
+            cloudsRendererRef.current.render(
+              now / 1000,
+              width,
+              height,
+              currentRef.current.upperSky,
+              currentRef.current.midSky,
+              currentRef.current.horizonBand,
+              stateRef.current.astronomy.sunElevation,
+              {
+                ...stateRef.current.weather,
+                lightningEffect: skyResult.lightningEffect
+              }
+            );
+          }
         }
       } else {
         if (cloudsRendererRef.current) {
@@ -249,12 +262,10 @@ const renderPrecipitation = (
 
   if (particles.length === 0) return;
 
-  
   const previousBlendMode = ctx.globalCompositeOperation;
   ctx.globalCompositeOperation = 'lighten';
 
   for (const particle of particles) {
-    
     ctx.globalAlpha = 1.0;
 
     if (particle.type === 'rain') {

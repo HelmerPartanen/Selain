@@ -351,50 +351,54 @@ const drawStarburst = (
   scale: number,
   color?: Rgb
 ) => {
-  const intensity = brightness * smoothstep(-2, 8, elevation) * 0.7;
-  if (intensity < 0.01) return;
+  const intensity = brightness * smoothstep(-2, 8, elevation);
+  if (intensity < 0.005) return;
 
   const c = color ?? sampleSunColor(elevation);
-  const spikeLength = 45 * scale * (1 + smoothstep(15, 0, elevation) * 0.5);
+  const spikeLength = 6 * scale * (1 + smoothstep(15, 0, elevation) * 0.8);
   const spikeCount = 6;
 
   ctx.save();
   ctx.translate(sunPos.x, sunPos.y);
 
-  for (let i = 0; i < spikeCount; i++) {
-    const angle = (i / spikeCount) * Math.PI;
+  const layers = [
+    { width: 14.0 * scale, alpha: intensity * 0.04 },
+    { width: 9.0 * scale, alpha: intensity * 0.06 },
+    { width: 6.0 * scale, alpha: intensity * 0.08 },
+    { width: 3.0 * scale, alpha: intensity * 0.10 }
+  ];
 
-    ctx.save();
-    ctx.rotate(angle);
+  for (const layer of layers) {
+    for (let i = 0; i < spikeCount; i++) {
+      const angle = (i / spikeCount) * Math.PI * 2;
 
-    const g = ctx.createLinearGradient(0, 0, spikeLength, 0);
-    const a = intensity * 0.15;
-    g.addColorStop(0, toRgba(c, a));
-    g.addColorStop(0.15, toRgba(c, a * 0.5));
-    g.addColorStop(0.5, toRgba(c, a * 0.12));
-    g.addColorStop(1, toRgba(c, 0));
+      ctx.save();
+      ctx.rotate(angle);
 
-    ctx.strokeStyle = g;
-    ctx.lineWidth = 1.2 * scale;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(spikeLength, 0);
-    ctx.stroke();
+      const g = ctx.createLinearGradient(0, 0, spikeLength, 0);
+      g.addColorStop(0, toRgba(c, layer.alpha * 0.5));
+      g.addColorStop(0.08, toRgba(c, layer.alpha * 0.45));
+      g.addColorStop(0.15, toRgba(c, layer.alpha * 0.35));
+      g.addColorStop(0.25, toRgba(c, layer.alpha * 0.20));
+      g.addColorStop(0.4, toRgba(c, layer.alpha * 0.10));
+      g.addColorStop(0.6, toRgba(c, layer.alpha * 0.04));
+      g.addColorStop(1, toRgba(c, 0));
 
-    const g2 = ctx.createLinearGradient(0, 0, -spikeLength, 0);
-    g2.addColorStop(0, toRgba(c, a));
-    g2.addColorStop(0.15, toRgba(c, a * 0.5));
-    g2.addColorStop(0.5, toRgba(c, a * 0.12));
-    g2.addColorStop(1, toRgba(c, 0));
+      ctx.strokeStyle = g;
+      ctx.lineWidth = layer.width;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(spikeLength, 0);
+      ctx.stroke();
 
-    ctx.strokeStyle = g2;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-spikeLength, 0);
-    ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-spikeLength, 0);
+      ctx.stroke();
 
-    ctx.restore();
+      ctx.restore();
+    }
   }
 
   ctx.restore();

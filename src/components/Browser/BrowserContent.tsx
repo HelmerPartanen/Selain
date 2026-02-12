@@ -72,7 +72,11 @@ export const BrowserContent = forwardRef<BrowserContentHandle, BrowserContentPro
         loadUrl: (url: string) => {
           const view = activeWebview();
           if (!view) return;
-          view.loadURL(url);
+          try {
+            view.loadURL(url);
+          } catch (e) {
+            console.warn('Failed to load URL:', e);
+          }
         }
       }),
       [activeWebview]

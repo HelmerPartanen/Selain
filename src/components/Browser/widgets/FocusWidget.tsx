@@ -60,9 +60,12 @@ export const FocusWidget: React.FC = () => {
     audio.preload = 'auto';
     hapticAudioRef.current = audio;
     return () => {
-      audio.pause();
-      audio.src = '';
-      hapticAudioRef.current = null;
+      if (hapticAudioRef.current === audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.src = '';
+        hapticAudioRef.current = null;
+      }
     };
   }, [hapticSoundUrl]);
 

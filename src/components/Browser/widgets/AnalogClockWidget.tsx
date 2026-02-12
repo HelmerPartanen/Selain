@@ -8,7 +8,7 @@ export const AnalogClockWidget: React.FC<ClockWidgetProps> = ({ widgetId }) => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 16);
+    const id = setInterval(() => setTime(new Date()), 33);
     return () => clearInterval(id);
   }, []);
 

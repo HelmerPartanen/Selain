@@ -21,6 +21,8 @@ export const useWebviewManager = ({
   const cosmeticsUrlRef = useRef<Record<string, string>>({});
   const cosmeticsCssKeyRef = useRef<Record<string, string[]>>({});
   const lastHistoryKeyRef = useRef<Record<string, string>>({});
+  const lastNavigateTimeRef = useRef<Record<string, number>>({});
+  const NAVIGATE_THROTTLE_MS = 300;
 
   const updateNavState = useCallback(
     (tabId: string, webview: WebviewTag | null) => {
@@ -102,11 +104,20 @@ export const useWebviewManager = ({
         if (favicon) onTabUpdate(tabId, { favicon });
       };
       const handleNavigate = (event: any) => {
+        const now = Date.now();
+        const lastTime = lastNavigateTimeRef.current[tabId] ?? 0;
+        if (now - lastTime < NAVIGATE_THROTTLE_MS) return;
+        lastNavigateTimeRef.current[tabId] = now;
+        
         if (event?.url) onTabUpdate(tabId, { url: event.url });
         updateNavState(tabId, el);
         if (event?.url) applyCosmetics(tabId, el, event.url);
       };
-      const handleFail = () => {
+      const handleFail = (event: any) => {
+        const errorCode = event?.errorCode;
+        if (errorCode === -3 || errorCode === 'ERR_ABORTED') {
+          return;
+        }
         onTabUpdate(tabId, { loading: false });
         updateNavState(tabId, el);
       };
@@ -168,8 +179,15 @@ export const useWebviewManager = ({
   useEffect(() => {
     return () => {
       Object.values(cleanupRef.current).forEach((cleanup) => {
-        if (typeof cleanup === 'function') cleanup();
+        if (typeof cleanup === 'function') {
+          try {
+            cleanup();
+          } catch (e) {
+            console.warn('Error during cleanup:', e);
+          }
+        }
       });
+      cleanupRef.current = {};
     };
   }, []);
 

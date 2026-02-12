@@ -186,8 +186,9 @@ const AddressBarInner: React.FC<AddressBarProps> = ({
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setInputVal(value);
-    if (inputDispatchTimeout.current) {
+    if (inputDispatchTimeout.current !== null) {
       clearTimeout(inputDispatchTimeout.current);
+      inputDispatchTimeout.current = null;
     }
     inputDispatchTimeout.current = window.setTimeout(() => {
       window.dispatchEvent(

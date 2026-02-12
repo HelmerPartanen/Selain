@@ -117,19 +117,34 @@ export const NewTabPage: React.FC = () => {
       window.clearTimeout(saveTimerRef.current);
     }
     saveTimerRef.current = window.setTimeout(() => {
-      const payload = {
-        widgets,
-        layout: layout.map(({ i, x, y, w, h, minW, minH }) => ({
-          i,
-          x,
-          y,
-          w,
-          h,
-          minW,
-          minH
-        }))
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      try {
+        const payload = {
+          widgets,
+          layout: layout.map(({ i, x, y, w, h, minW, minH }) => ({
+            i,
+            x,
+            y,
+            w,
+            h,
+            minW,
+            minH
+          }))
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (e) {
+        if (e instanceof QuotaExceededError) {
+          console.warn('localStorage quota exceeded; clearing old widget data');
+          try {
+            const allKeys = Object.keys(localStorage).filter(k => k.startsWith('newtab-'));
+            allKeys.slice(0, Math.ceil(allKeys.length / 3)).forEach(k => localStorage.removeItem(k));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+          } catch (retryError) {
+            console.error('Failed to save widgets after cleanup:', retryError);
+          }
+        } else {
+          console.error('Failed to save widget state:', e);
+        }
+      }
     }, 250);
     return () => {
       if (saveTimerRef.current !== null) {

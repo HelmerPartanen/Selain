@@ -420,8 +420,10 @@ const Home: React.FC = () => {
   }, []);
 
   const handleCloseTab = useCallback(
-    (id: string, event: React.MouseEvent) => {
-      event.stopPropagation();
+    (id: string, event?: React.MouseEvent) => {
+      if (event) {
+        event.stopPropagation();
+      }
       setTabs((prev) => {
         if (prev.length === 1) return prev;
         const nextTabs = prev.filter((tab) => tab.id !== id);

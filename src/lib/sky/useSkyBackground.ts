@@ -80,12 +80,10 @@ export const useSkyBackground = (state: SkyStateInput) => {
       canvas.style.width = `${Math.floor(bounds.width)}px`;
       canvas.style.height = `${Math.floor(bounds.height)}px`;
       
-      
       if (precipitationSystemRef.current) {
         precipitationSystemRef.current.resize(width, height);
       }
 
-      
       const cloudsCanvas = cloudsCanvasRef.current;
       if (cloudsCanvas) {
         cloudsCanvas.width = width;
@@ -102,7 +100,7 @@ export const useSkyBackground = (state: SkyStateInput) => {
     let raf = 0;
     let last = performance.now();
     let lastCloudRender = 0;
-    const CLOUD_RENDER_INTERVAL = 250;
+    const CLOUD_RENDER_INTERVAL = 300;
 
     const animate = (now: number) => {
       const dt = Math.min(33, now - last);

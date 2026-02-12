@@ -10,12 +10,12 @@ const __dirname = path.dirname(__filename);
 
 
 app.commandLine.appendSwitch('renderer-process-limit', '6');
+app.commandLine.appendSwitch('enable-v8-code-caching');
+app.commandLine.appendSwitch('enable-preconnect');
 
 const isDev = !app.isPackaged;
 
-
-
-if (process.env.DISABLE_GPU === '0') {
+if (process.env.DISABLE_GPU !== '0') {
   try {
     app.disableHardwareAcceleration();
   } catch (e) {
@@ -144,9 +144,6 @@ const mapResourceType = (resourceType) => {
 const attachAdblocker = () => {
   if (adblockAttached) return;
   adblockAttached = true;
-
-  
-  
   
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
     if (!adBlockEnabled) {
@@ -235,10 +232,15 @@ const createWindow = async () => {
       preload: preloadPath,
       contextIsolation: true,
       nodeIntegration: false,
-      webviewTag: true
+      webviewTag: true,
+      disableBlinkFeatures: 'AutomationControlled',
+      enableBlinkFeatures: ''
     }
   });
 
+  mainWindow.webContents.setUserAgent(
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+  );
   
   const distPath = app.isPackaged
     ? path.join(app.getAppPath(), 'dist', 'index.html')
@@ -260,7 +262,6 @@ const createWindow = async () => {
     }
   }
 
-  
   mainWindow.once('ready-to-show', () => {
     if (shouldFullscreen) {
       mainWindow.setFullScreen(true);
@@ -437,6 +438,23 @@ app.whenReady().then(async () => {
       mainWindow.webContents.on('render-process-gone', (event, details) => {
         log(`Render process gone: ${details.reason}`);
       });
+
+      const originalLog = console.log;
+      const originalError = console.error;
+      
+      mainWindow.webContents.on('console-message', (level, message) => {
+        const msgStr = typeof message === 'string' ? message : String(message ?? '');
+        if (msgStr.includes('Autofill.enable') || 
+            msgStr.includes('Autofill.setAddresses') ||
+            msgStr.includes("wasn't found")) {
+          return;
+        }
+        if (level === 3) {
+          originalError(`[DevTools] ${msgStr}`);
+        } else {
+          originalLog(`[DevTools] ${msgStr}`);
+        }
+      });
     }
     
     
@@ -532,6 +550,14 @@ app.whenReady().then(async () => {
         });
       });
     });
+
+    if (contents.getType() === 'webview') {
+      contents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+        const isAborted = errorCode === -3 || errorCode === 'ERR_ABORTED';
+        if (isAborted) return;
+        console.warn(`Webview failed to load: ${errorDescription} (${errorCode}) from ${validatedURL}`);
+      });
+    }
   });
 
   app.on('activate', () => {

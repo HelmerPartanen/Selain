@@ -3,7 +3,7 @@ import { SkyLayerColors, SkyStateInput } from './skyTypes';
 import { toCssRgb } from './skyColor';
 import { clamp01 } from './skyUtils';
 import { getSunScreenPosition } from './skyView';
-import { drawSunDisc } from './skySun';
+import { drawSun } from './skySun';
 import { drawAtmosphere } from './skyAtmosphere';
 import { overlayNoise } from './skyNoise';
 import { drawStars } from './skyStarRenderer';
@@ -59,18 +59,15 @@ export const renderSkyGradient = (
       ctx.restore();
 
       
-      drawSunDisc(
+      drawSun(
         ctx,
         width,
         height,
-        layers,
-        sunPos,
         sunElevation,
-        sunVisibility,
+        sunAzimuth,
         cloudCover,
         fogDensity,
-        time,
-        windSpeed
+        sunPos
       );
     }
   }

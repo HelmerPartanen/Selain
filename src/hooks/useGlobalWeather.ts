@@ -1,7 +1,4 @@
-/**
- * Global weather hook for the new tab page sky background
- * Reuses logic from WeatherWidget but provides global access
- */
+
 
 import { useEffect, useMemo, useState } from 'react';
 import { WeatherLocation } from '@/lib/types';
@@ -42,7 +39,7 @@ type WeatherState = {
   fogDensity: number;
   precipitationAmount?: number;
   windSpeed?: number;
-  windDirection?: number; // degrees, 0 = north, 90 = east
+  windDirection?: number; 
   precipitationProbability?: number;
   visibility: number;
   latitude: number;
@@ -82,7 +79,7 @@ const writeCachedWeather = (key: string, state: WeatherState) => {
     };
     localStorage.setItem(key, JSON.stringify(payload));
   } catch {
-    // ignore cache write failures
+    
   }
 };
 
@@ -347,7 +344,7 @@ export const useGlobalWeather = () => {
               ? data.hourly.precipitation_probability[nearestIdx]
               : undefined),
           windSpeed: typeof windSpeed === 'number' ? windSpeed : undefined,
-          windDirection: typeof windDirection === 'number' ? windDirection : 15, // Default if not available
+          windDirection: typeof windDirection === 'number' ? windDirection : 15, 
           visibility: visibilityKm ?? fallbackVisibility,
           latitude: storedLocation.latitude,
           longitude: storedLocation.longitude

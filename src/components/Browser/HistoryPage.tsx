@@ -26,7 +26,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ items = [], onClear })
       <div className="flex h-full p-8">
         <div className="flex h-full w-full gap-6 rounded-3xl bg-[color:var(--ui-surface)] shadow-lg p-3 overflow-hidden">
           <section className="relative flex h-full flex-1 flex-col overflow-hidden">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between border-b border-[color:var(--ui-border)] px-6 py-4">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--ui-text)]">
@@ -47,7 +47,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ items = [], onClear })
               )}
             </div>
 
-            {/* Content */}
+            {}
             <div className="flex-1 overflow-hidden p-6">
               {!hasItems && (
                 <>

@@ -1,6 +1,4 @@
-/**
- * Hook for managing theme-related settings
- */
+
 
 import { useCallback, useEffect, useState } from 'react';
 import { Theme } from '@/lib/types';
@@ -30,13 +28,13 @@ export const useTheme = (defaultTheme: Theme = Theme.SYSTEM): UseThemeResult => 
     }
   }, []);
 
-  // Listen for system theme changes
+  
   useEffect(() => {
     if (theme !== Theme.SYSTEM) return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
-      // Trigger re-render by updating state
+      
       setThemeState(theme);
     };
 

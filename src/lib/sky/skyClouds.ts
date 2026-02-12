@@ -1,5 +1,5 @@
-// skyClouds.ts
-// WebGL-based cloud renderer using 3D Simplex noise
+
+
 
 import { CloudTypeConfig, determineCloudType, CLOUD_TYPE_CONFIGS } from './cloudTypes';
 
@@ -27,7 +27,7 @@ export class SkyCloudsRenderer {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.seed = Math.random() * 1000; // Generate random seed
+    this.seed = Math.random() * 1000; 
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (!gl) {
       throw new Error('WebGL not supported');
@@ -51,7 +51,7 @@ export class SkyCloudsRenderer {
     this.windSpeedUniform = this.gl.getUniformLocation(this.program, 'uWindSpeed')!;
     this.windDirectionUniform = this.gl.getUniformLocation(this.program, 'uWindDirection')!;
 
-    // Default to clear skies
+    
     this.currentCloudConfig = {
       sizeScale: 1.0,
       densityScale: 0.1,
@@ -415,7 +415,7 @@ float skyMask = smoothstep(-0.2, 0.6, uv.y);
     windDirection?: number;
     lightningEffect?: { intensity: number; centers: { x: number; y: number; intensity: number }[]; radius: number; color?: string };
   }) {
-    // Update cloud configuration based on weather
+    
     if (weather) {
       const cloudType = determineCloudType(weather);
       this.currentCloudConfig = CLOUD_TYPE_CONFIGS[cloudType];
@@ -425,7 +425,7 @@ float skyMask = smoothstep(-0.2, 0.6, uv.y);
     this.gl.clearColor(0, 0, 0, 0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-    // Enable alpha blending
+    
     this.gl.enable(this.gl.BLEND);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
 
@@ -455,8 +455,8 @@ float skyMask = smoothstep(-0.2, 0.6, uv.y);
     );
     this.gl.uniform1f(this.sizeScaleUniform, this.currentCloudConfig.sizeScale);
     this.gl.uniform1f(this.lightningIntensityUniform, weather?.lightningEffect?.intensity || 0.0);
-    this.gl.uniform1f(this.windSpeedUniform, Math.max(weather?.windSpeed || 0.0, 0.5)); // Use real wind speed with minimum
-    this.gl.uniform1f(this.windDirectionUniform, weather?.windDirection || 0.0); // Use real wind direction
+    this.gl.uniform1f(this.windSpeedUniform, Math.max(weather?.windSpeed || 0.0, 0.5)); 
+    this.gl.uniform1f(this.windDirectionUniform, weather?.windDirection || 0.0); 
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.quadBuffer);
     const positionAttribute = this.gl.getAttribLocation(this.program, 'aPosition');

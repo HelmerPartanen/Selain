@@ -166,7 +166,7 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
         const normalized = normalizeUrl(trimmed);
         items.push({
           id: `url-${normalized}`,
-          label: normalized.replace(/^https?:\/\//, ''),
+          label: normalized.replace(/^https?:\/\
           value: normalized,
           description: 'Open website',
           hint: 'Direct',
@@ -189,7 +189,7 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
         id: `tab-${tab.id}`,
         label: tab.title || tab.url,
         value: tab.url,
-        description: tab.url.replace(/^https?:\/\//, ''),
+        description: tab.url.replace(/^https?:\/\
         hint: 'Open tab',
         icon: tab.favicon ? (
           <img
@@ -230,7 +230,7 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
         id: `history-${index}-${item.url}`,
         label: item.title || item.url,
         value: item.url,
-        description: item.url.replace(/^https?:\/\//, ''),
+        description: item.url.replace(/^https?:\/\
         hint: 'History',
         icon: <LuRotateCcw size={14} />,
         type: 'url' as const
@@ -333,9 +333,9 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
                   : 'text-[color:var(--ui-text)] hover:bg-[color:var(--ui-hover)] hover:shadow-sm'
               }`}
             >
-              {/* Main content */}
+              {}
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                {/* Optional icon placeholder - you can add icons here */}
+                {}
                 {item.icon && (
                   <div className={`shrink-0 transition-colors ${
                     isActive ? 'text-[color:var(--ui-text)]' : 'text-[color:var(--ui-text-muted)]'
@@ -351,7 +351,7 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
                     {item.label}
                   </span>
                   
-                  {/* Optional description */}
+                  {}
                   {item.description && (
                     <span className="truncate text-xs text-[color:var(--ui-text-muted)] mt-0.5">
                       {item.description}
@@ -360,7 +360,7 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
                 </div>
               </div>
 
-              {/* Hint/Keyboard shortcut */}
+              {}
               {item.hint && (
                 <div className={`shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium uppercase tracking-wider transition-[color,background] ${
                   isActive 

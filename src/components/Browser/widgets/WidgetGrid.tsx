@@ -13,13 +13,7 @@ interface WidgetGridProps {
   onRemoveWidget: (id: string) => void;
 }
 
-/**
- * Performance note:
- * - We intentionally do NOT push layout updates to React state during drag/resize.
- * - RGL already animates via transforms; React state updates during drag cause global re-renders and jank.
- * - We only commit when the interaction ends (drag/resize stop).
- * - Wrapped with React.memo to prevent re-renders when parent props haven't changed.
- */
+
 const WidgetGridInner: React.FC<WidgetGridProps> = ({
   widgets,
   layout,
@@ -40,11 +34,11 @@ const WidgetGridInner: React.FC<WidgetGridProps> = ({
       isBounded
       draggableCancel=".widget-remove-button, .widget-interactive"
       compactType={null}
-      // Keep widgets from pushing each other while dragging/resizing.
+      
       preventCollision={true}
       allowOverlap={false}
       resizeHandles={['se', 'e', 's']}
-      // Critical: do not update state during drag/resize
+      
       onLayoutChange={() => {}}
       onDragStop={(nextLayout) => onLayoutCommit(nextLayout)}
       onResizeStop={(nextLayout) => onLayoutCommit(nextLayout)}

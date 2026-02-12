@@ -1,6 +1,4 @@
-/**
- * Tab management utility functions
- */
+
 
 import { Tab } from '@/lib/types';
 

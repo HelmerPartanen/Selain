@@ -61,7 +61,7 @@ export const SettingsPage = memo<React.FC<any>>(({
       <div className="flex h-full p-8">
         <div className="flex h-full w-full gap-6 rounded-3xl bg-[color:var(--ui-surface)] shadow-lg p-4 overflow-hidden">
 
-          {/* Sidebar */}
+          {}
           <aside className="flex h-full w-[220px] shrink-0 flex-col p-3 overflow-hidden">
             <div className="text-xs uppercase tracking-wide text-[color:var(--ui-text-subtle)]">
               Settings
@@ -87,10 +87,10 @@ export const SettingsPage = memo<React.FC<any>>(({
             </nav>
           </aside>
 
-          {/* Content */}
+          {}
           <section className="relative flex h-full flex-1 flex-col rounded-3xl bg-[color:var(--ui-surface-strong)] shadow-md overflow-hidden">
 
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between border-b border-[color:var(--ui-border)] px-6 py-4">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--ui-text)]">
@@ -105,7 +105,7 @@ export const SettingsPage = memo<React.FC<any>>(({
               </IconButton>
             </div>
 
-            {/* Scrollable Content */}
+            {}
             <div className="relative flex-1 overflow-y-auto px-6 py-6 pb-28">
               {activeSection === 'appearance' && (
                 <AppearanceSettingsSection
@@ -141,7 +141,7 @@ export const SettingsPage = memo<React.FC<any>>(({
               {activeSection === 'advanced' && <AdvancedSettingsSection />}
             </div>
 
-            {/* Sticky Save Bar */}
+            {}
             {hasUnsavedChanges && (
               <div className="pointer-events-none absolute bottom-6 right-6 z-10">
                 <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-[color:var(--ui-surface-strong)] px-4 py-2 shadow-sm backdrop-blur">

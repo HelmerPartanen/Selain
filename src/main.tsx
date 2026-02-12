@@ -8,5 +8,5 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
-// Disable StrictMode in production to avoid double renders
+
 root.render(<App />);

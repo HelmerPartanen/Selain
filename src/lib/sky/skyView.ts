@@ -1,10 +1,10 @@
-// src/lib/sky/skyView.ts
+
 
 export type SunScreenPos = { x: number; y: number };
 
-// ----------------------------
-// View / projection configuration
-// ----------------------------
+
+
+
 const SKY_VIEW = {
   viewAzimuth: 180,
   fovDeg: 100,

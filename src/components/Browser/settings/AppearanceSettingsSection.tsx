@@ -35,13 +35,10 @@ export const AppearanceSettingsSection: React.FC<
   return (
     <div className="space-y-6 overflow-x-hidden">
       <SettingsGroup title="Background">
-        {/* IMPORTANT:
-            - No horizontal padding here
-            - Parent scroll container already provides px
-        */}
+        {}
         <div className="py-8 overflow-x-hidden">
           <div className="mx-auto max-w-5xl space-y-8">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between gap-4">
               <div className="w-[120px]" />
 
@@ -82,7 +79,7 @@ export const AppearanceSettingsSection: React.FC<
               </div>
             </div>
 
-            {/* Preview */}
+            {}
             <div className="mx-auto w-full max-w-4xl overflow-x-hidden">
               <div className="relative isolate aspect-video overflow-hidden rounded-3xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface-subtle)]">
                 {activeWallpaper ? (
@@ -114,7 +111,7 @@ export const AppearanceSettingsSection: React.FC<
               </div>
             </div>
 
-            {/* Controls */}
+            {}
             <div className="space-y-6">
               {backgroundType === 'wallpaper' && (
                 <div className="mx-auto flex max-w-md items-center justify-center gap-3">

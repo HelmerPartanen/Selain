@@ -525,7 +525,7 @@ const Home: React.FC = () => {
     if (!permissionRequest || !window.electronAPI?.respondPermission) return;
     window.electronAPI.respondPermission(permissionRequest.id, true);
     
-    // Store the permission
+    
     const origin = new URL(permissionRequest.origin).origin;
     setPermissions(prev => {
       const newPerms = { ...prev };
@@ -553,7 +553,7 @@ const Home: React.FC = () => {
     if (!permissionRequest || !window.electronAPI?.respondPermission) return;
     window.electronAPI.respondPermission(permissionRequest.id, false);
     
-    // Store the permission as denied
+    
     const origin = new URL(permissionRequest.origin).origin;
     setPermissions(prev => {
       const newPerms = { ...prev };
@@ -581,7 +581,7 @@ const Home: React.FC = () => {
     if (!permissionRequest || !window.electronAPI?.respondPermission) return;
     window.electronAPI.respondPermission(permissionRequest.id, false);
     
-    // Store the permission as denied
+    
     const origin = new URL(permissionRequest.origin).origin;
     setPermissions(prev => {
       const newPerms = { ...prev };
@@ -694,16 +694,16 @@ const Home: React.FC = () => {
     }, 1000);
   }, [onboardingOpen]);
 
-  // Keyboard shortcuts
+  
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Ctrl+T: New tab and open spotlight search
+      
       if (event.ctrlKey && event.key === 't') {
         event.preventDefault();
         handleNewTab();
         setSpotlightOpen(true);
       }
-      // Ctrl+W: Close tab
+      
       else if (event.ctrlKey && event.key === 'w') {
         event.preventDefault();
         const activeTab = tabs.find(tab => tab.id === activeTabId);
@@ -711,25 +711,25 @@ const Home: React.FC = () => {
           handleCloseTab(activeTab.id);
         }
       }
-      // Ctrl+L: Focus address bar
+      
       else if (event.ctrlKey && event.key === 'l') {
         event.preventDefault();
-        // Address bar focus would be handled by the AddressBar component
+        
       }
-      // Ctrl+H: Toggle history
+      
       else if (event.ctrlKey && event.key === 'h') {
         event.preventDefault();
         setHistoryOpen(prev => !prev);
         setSettingsOpen(false);
       }
-      // Ctrl+, : Open settings
+      
       else if (event.ctrlKey && event.key === ',') {
         event.preventDefault();
         setSettingsOpen(true);
         setHistoryOpen(false);
       }
-      // F11: Toggle fullscreen (handled by Electron)
-      // Ctrl+Shift+I: Toggle dev tools (handled by Electron)
+      
+      
     };
 
     window.addEventListener('keydown', handleKeyDown, { capture: true });

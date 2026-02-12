@@ -216,10 +216,10 @@ export const NewTabPage: React.FC = () => {
 
   return (
     <div className="w-full h-full text-[color:var(--ui-newtab-text)] relative overflow-hidden">
-      {/* Sky Background */}
+      {}
       <SkyBackground state={skyState} />
 
-      {/* Background with visual detail (required for blur) */}
+      {}
       <div className="absolute inset-0 bg-transparent" />
 
       <div className="absolute inset-0 pb-10">

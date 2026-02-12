@@ -1,6 +1,4 @@
-/**
- * History utility functions
- */
+
 
 import { HistoryItem } from '@/lib/types';
 
@@ -13,7 +11,7 @@ export const addHistoryItem = (
   item: HistoryItem,
   maxItems: number = 100
 ): HistoryItem[] => {
-  // Check if URL already exists and update timestamp if it does
+  
   const existingIndex = history.findIndex((h) => h.url === item.url);
   if (existingIndex !== -1) {
     const updated = [...history];

@@ -1,4 +1,4 @@
-// SkyBackground.tsx
+
 import React from 'react';
 import { useSkyBackground } from '@/lib/sky/useSkyBackground';
 import { SkyStateInput } from '@/lib/sky/skyTypes';

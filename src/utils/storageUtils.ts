@@ -1,11 +1,7 @@
-/**
- * Local storage utilities for persisting app data
- */
+
 
 export const storageUtils = {
-  /**
-   * Safely get an item from localStorage
-   */
+  
   getItem<T>(key: string, defaultValue?: T): T | null {
     try {
       if (typeof window === 'undefined') return defaultValue || null;
@@ -17,9 +13,7 @@ export const storageUtils = {
     }
   },
 
-  /**
-   * Safely set an item in localStorage
-   */
+  
   setItem<T>(key: string, value: T): void {
     try {
       if (typeof window === 'undefined') return;
@@ -29,9 +23,7 @@ export const storageUtils = {
     }
   },
 
-  /**
-   * Remove an item from localStorage
-   */
+  
   removeItem(key: string): void {
     try {
       if (typeof window === 'undefined') return;
@@ -41,9 +33,7 @@ export const storageUtils = {
     }
   },
 
-  /**
-   * Clear all items from localStorage
-   */
+  
   clear(): void {
     try {
       if (typeof window === 'undefined') return;
@@ -53,9 +43,7 @@ export const storageUtils = {
     }
   },
 
-  /**
-   * Get string value from localStorage
-   */
+  
   getString(key: string, defaultValue: string = ''): string {
     try {
       if (typeof window === 'undefined') return defaultValue;
@@ -65,9 +53,7 @@ export const storageUtils = {
     }
   },
 
-  /**
-   * Set string value in localStorage
-   */
+  
   setString(key: string, value: string): void {
     try {
       if (typeof window === 'undefined') return;
@@ -77,9 +63,7 @@ export const storageUtils = {
     }
   },
 
-  /**
-   * Get boolean value from localStorage
-   */
+  
   getBoolean(key: string, defaultValue: boolean = false): boolean {
     try {
       if (typeof window === 'undefined') return defaultValue;
@@ -90,9 +74,7 @@ export const storageUtils = {
     }
   },
 
-  /**
-   * Set boolean value in localStorage
-   */
+  
   setBoolean(key: string, value: boolean): void {
     try {
       if (typeof window === 'undefined') return;

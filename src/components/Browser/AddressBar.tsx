@@ -35,7 +35,7 @@ const AddressBarInner: React.FC<AddressBarProps> = ({
 
   const [isFocused, setIsFocused] = useState(false);
 
-  // Only sync from props when NOT focused
+  
   useEffect(() => {
     if (!isFocused) {
       setInputVal(isWelcome ? "" : displayDomain);
@@ -207,7 +207,7 @@ const AddressBarInner: React.FC<AddressBarProps> = ({
   const placeholderText = "Search or enter URL";
   const displayText = inputVal || placeholderText;
   const inputSize = Math.max(1, displayText.length + 1);
-  const compactWidth = `calc(${inputSize}ch + 24px)`; // 24px for padding and icon
+  const compactWidth = `calc(${inputSize}ch + 24px)`; 
   const minCompactWidth = '160px';
   const maxCompactWidth = '420px';
 

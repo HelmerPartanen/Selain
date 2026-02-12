@@ -1,6 +1,4 @@
-/**
- * Theme management utilities
- */
+
 
 import { AppSettings, Theme } from '@/lib/types';
 
@@ -93,7 +91,7 @@ export const applyTheme = (
   cssVars['--ui-accent'] = isDark ? '#ffffff' : '#3b82f6';
   cssVars['--ui-accent-contrast'] = isDark ? '#000' : '#fff';
 
-  // Apply all CSS variables to root
+  
   Object.entries(cssVars).forEach(([key, value]) => {
     root.style.setProperty(key, value);
   });

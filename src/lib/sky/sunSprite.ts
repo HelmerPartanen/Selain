@@ -1,7 +1,4 @@
-/**
- * Sun disc and sprite rendering calculations
- * Handles sprite baking with disc, bloom, halo, and granulation
- */
+
 
 import { toCssRgb, type Rgb } from './skyColor';
 import { clamp01, lerp, mixColor } from './skyUtils';
@@ -11,15 +8,15 @@ type Granule = { x: number; y: number; r: number; a: number };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
-// Deterministic hash for cheap pseudo-random (no allocations)
+
 const hash01 = (n: number) => {
   const x = Math.sin(n) * 43758.5453123;
   return x - Math.floor(x);
 };
 
-// ----------------------------
-// Granulation cache (bucketed by radius)
-// ----------------------------
+
+
+
 const granuleCache = new Map<number, Granule[]>();
 
 export const getGranules = (radius: number) => {
@@ -48,9 +45,9 @@ export const getGranules = (radius: number) => {
   return pts;
 };
 
-// ----------------------------
-// Cached Path2D for circular clip areas (bucketed by radius)
-// ----------------------------
+
+
+
 const clipPathCache = new Map<string, Path2D>();
 
 export const getDiscClipPath = (rx: number, ry: number) => {
@@ -63,9 +60,9 @@ export const getDiscClipPath = (rx: number, ry: number) => {
   return p;
 };
 
-// ----------------------------
-// Bounded fills helper (used in sprite baking)
-// ----------------------------
+
+
+
 export const fillRadialBounded = (
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -85,13 +82,13 @@ export const fillRadialBounded = (
   ctx.restore();
 };
 
-// ----------------------------
-// Sprite cache: bake disc+bloom+halo into offscreen canvas
-// (dramatically reduces per-frame gradient/filter churn)
-// ----------------------------
+
+
+
+
 export type SunSprite = {
   canvas: HTMLCanvasElement;
-  half: number; // half-size for centering
+  half: number; 
   discRadius: number;
   haloRadius: number;
 };
@@ -120,7 +117,7 @@ export interface SpriteParams {
 }
 
 export const getSunSprite = (params: SpriteParams): SunSprite => {
-  // Bucket params to keep cache bounded
+  
   const dr = bucket(params.discRadius, 2, 6, 220);
   const hr = bucket(params.haloRadius, 8, 32, 1400);
   const ext = bucket(params.extinction, 0.05, 0, 1);
@@ -136,7 +133,7 @@ export const getSunSprite = (params: SpriteParams): SunSprite => {
   const cached = sunSpriteCache.get(key);
   if (cached) return cached;
 
-  // Offscreen size: include halo + padding for blur
+  
   const pad = Math.max(18, Math.ceil(hr * 0.12));
   const size = Math.ceil((hr + pad) * 2);
   const half = size / 2;
@@ -149,10 +146,10 @@ export const getSunSprite = (params: SpriteParams): SunSprite => {
   const cx = half;
   const cy = half;
 
-  // Build a normalized disc alpha (we'll apply overall alpha at draw time)
+  
   const discBaseAlphaNorm = clamp01(0.95 * tone) * 0.95;
 
-  // Fog wash reduces disc contrast (disc eats sky)
+  
   const haze = clamp01(cloud * 0.7 + fog * 0.9);
   const fogDiscWash = lerp(0.0, 0.22, fog);
   const discRGB = mixColor(params.finalSunRGB, [1, 1, 1], 0.08);
@@ -163,14 +160,14 @@ export const getSunSprite = (params: SpriteParams): SunSprite => {
     fogDiscWash
   );
 
-  // Limb darkening: reduce under haze
+  
   const limbStrength = lerp(0.12, 0.42, 1.0 - ext) * lerp(1.0, 0.55, haze);
 
-  // Composite mode: screen-like feel
+  
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
 
-  // 1) Disc edge softness + subtle distortion (baked, stable)
+  
   {
     const edgeGrad = ctx.createRadialGradient(
       cx,
@@ -192,7 +189,7 @@ export const getSunSprite = (params: SpriteParams): SunSprite => {
     for (let i = 0; i <= steps; i++) {
       const a = (i / steps) * Math.PI * 2;
 
-      // deterministic edge noise (no time in sprite)
+      
       const n =
         Math.sin(a * 7.3 + params.timeSeed * 0.001) *
         Math.sin(a * 3.1 + params.timeSeed * 0.002);
@@ -206,7 +203,7 @@ export const getSunSprite = (params: SpriteParams): SunSprite => {
     ctx.fill();
   }
 
-  // 2) Limb darkening layers
+  
   {
     ctx.fillStyle = toCssRgb(finalDiscRGB, 1.0);
     for (let i = 0; i < SUN.limbLayers; i++) {
@@ -220,7 +217,7 @@ export const getSunSprite = (params: SpriteParams): SunSprite => {
     }
   }
 
-  // 3) Bright core
+  
   {
     const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, dr * 0.9);
     core.addColorStop(0.0, toCssRgb([1.0, 1.0, 1.0], 1.0));
@@ -235,7 +232,7 @@ export const getSunSprite = (params: SpriteParams): SunSprite => {
     ctx.fill();
   }
 
-  // 4) Granulation (static baked; shimmer stays in main pass if desired)
+  
   if (dr > SUN.granuleMinRadius && et > 0.25) {
     const granules = getGranules(dr);
     ctx.save();
@@ -257,7 +254,7 @@ export const getSunSprite = (params: SpriteParams): SunSprite => {
     ctx.restore();
   }
 
-  // 5) Inner bloom (baked; reduces per-frame filter churn massively)
+  
   {
     const fogBoost = lerp(1.0, 2.5, fog);
     const bloomAlpha = (SUN.bloomBase + fog * SUN.bloomFogK) * fogBoost;
@@ -287,7 +284,7 @@ export const getSunSprite = (params: SpriteParams): SunSprite => {
     ctx.restore();
   }
 
-  // 6) Halos (warm + cool chromatic fringe)
+  
   {
     const fogBoost = lerp(1.0, 2.5, fog);
 
@@ -312,7 +309,7 @@ export const getSunSprite = (params: SpriteParams): SunSprite => {
     fillRadialBounded(ctx, cx, cy, hr * 1.08, haloCool);
   }
 
-  ctx.restore(); // screen composite
+  ctx.restore(); 
   ctx.filter = 'none';
   ctx.globalAlpha = 1;
 

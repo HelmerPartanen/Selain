@@ -79,7 +79,7 @@ export const Sidebar = memo(
           </span>
         </div>
 
-        {/* Scrollable section */}
+        {}
         <div className="px-2 flex-1 overflow-y-auto scrollbar-hide">
           <MenuItem icon={LuBook} label="Bookmarks" />
           <MenuItem icon={LuGlasses} label="Reading List" />
@@ -91,7 +91,7 @@ export const Sidebar = memo(
           />
         </div>
 
-        {/* Bottom fixed section */}
+        {}
         <div className="px-2 mt-4 pt-4">
           <MenuItem
             icon={LuSettings}

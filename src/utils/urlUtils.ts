@@ -1,6 +1,4 @@
-/**
- * URL utility functions for browser operations
- */
+
 
 export const isInternalUrl = (url: string): boolean => {
   return url.startsWith('browser://');

@@ -11,7 +11,7 @@ export const INITIAL_TABS: Tab[] = [
   }
 ];
 
-// Animation durations (in milliseconds)
+
 export const ANIMATION_DURATIONS = {
   FAST: 150,
   NORMAL: 300,
@@ -20,7 +20,7 @@ export const ANIMATION_DURATIONS = {
   TOOLTIP: 150,
 } as const;
 
-// UI dimensions and breakpoints
+
 export const UI_CONSTANTS = {
   SIDEBAR_WIDTH: 280,
   TAB_HEIGHT: 40,
@@ -30,14 +30,14 @@ export const UI_CONSTANTS = {
   MAX_TAB_WIDTH: 240,
 } as const;
 
-// History and storage limits
+
 export const STORAGE_LIMITS = {
   HISTORY_MAX_ITEMS: 300,
-  CACHE_TTL_MS: 10 * 60 * 1000, // 10 minutes
-  THROTTLE_MS: 15 * 1000, // 15 seconds
+  CACHE_TTL_MS: 10 * 60 * 1000, 
+  THROTTLE_MS: 15 * 1000, 
 } as const;
 
-// WebGL and rendering constants
+
 export const RENDER_CONSTANTS = {
   SKY_LAYER_COUNT: 3,
   CLOUD_PARTICLES_MAX: 1000,

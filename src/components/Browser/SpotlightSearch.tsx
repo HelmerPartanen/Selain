@@ -31,7 +31,7 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({
   useEffect(() => {
     if (isOpen) {
       setQuery('');
-      // Focus input after modal opens
+      
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
@@ -54,7 +54,7 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/50 backdrop-blur-sm">
       <div ref={modalRef} className="w-full max-w-2xl mx-4">
-        {/* Search Input */}
+        {}
         <div className="relative">
           <div className="flex items-center bg-[color:var(--ui-surface-strong)] shadow-sm border border-[color:var(--ui-border)] rounded-full shadow-2xl overflow-hidden">
             <div className="flex items-center pl-4 pr-2">
@@ -77,7 +77,7 @@ export const SpotlightSearch: React.FC<SpotlightSearchProps> = ({
           </div>
         </div>
 
-        {/* Suggestions */}
+        {}
         {query && (
           <div className="mt-2">
             <SuggestionsBar

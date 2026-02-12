@@ -408,7 +408,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
       <div
         className="flex w-full max-w-6xl flex-col rounded-2xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface)] shadow-xl overflow-hidden h-[min(85vh,800px)]"
       >
-        {/* Progress indicator */}
+        {}
         <div className="flex shrink-0 items-center justify-center gap-2 px-6 py-5">
           {steps.map((step, index) => (
             <button
@@ -445,9 +445,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
           ))}
         </div>
 
-        {/* Content area */}
+        {}
         <div className="relative flex flex-1 flex-col overflow-hidden">
-          {/* Title */}
+          {}
           <div className="shrink-0 px-8 py-5 text-center">
             <h2 className="text-2xl font-bold text-[color:var(--ui-text)]">
               {activeStep.title}
@@ -459,7 +459,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
             )}
           </div>
 
-          {/* Step content (no scrolling) */}
+          {}
           <div
             className={`flex flex-1 items-center justify-center px-8 pb-6 transition-[opacity,transform] duration-250 ease-out ${transitionClass}`}
           >
@@ -469,7 +469,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
           </div>
         </div>
 
-        {/* Navigation */}
+        {}
         <div className="flex shrink-0 items-center justify-between px-8 py-5">
           <button
             type="button"

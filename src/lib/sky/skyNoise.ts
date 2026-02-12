@@ -1,8 +1,8 @@
-// src/lib/sky/skyNoise.ts
 
-// ----------------------------
-// Noise tile (cheap dithering/grain)
-// ----------------------------
+
+
+
+
 let noiseTileCanvas: HTMLCanvasElement | null = null;
 let noiseTileSize = 128;
 
@@ -52,16 +52,16 @@ export const overlayNoise = (
 ) => {
   if (strength <= 0.001) return;
 
-  const tile = getNoiseTile(256); // Larger tile for smoother gradients
+  const tile = getNoiseTile(256); 
   if (!tile) return;
 
-  const alpha = Math.min(0.015, strength / 120); // Much lower opacity for smoother blending
-  const scrollX = Math.floor((time * 2) % tile.width); // Slower scroll
+  const alpha = Math.min(0.015, strength / 120); 
+  const scrollX = Math.floor((time * 2) % tile.width); 
   const scrollY = Math.floor((time * 1.5) % tile.height);
 
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.globalCompositeOperation = 'overlay'; // Smoother blending than soft-light
+  ctx.globalCompositeOperation = 'overlay'; 
 
   for (let y = -tile.height; y < height + tile.height; y += tile.height) {
     for (let x = -tile.width; x < width + tile.width; x += tile.width) {

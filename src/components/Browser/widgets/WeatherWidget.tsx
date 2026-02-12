@@ -1,4 +1,4 @@
-// WeatherWidget.tsx
+
 import React, { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { WeatherLocation } from '@/lib/types';
 import { useDevPanelState, useDevTime } from '@/lib/devPanelState';
@@ -271,7 +271,7 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
 
       const mapDevPrecipAmount = (precip: typeof devWeather.precipitation | undefined) => {
         if (!precip || precip === 'none') return 0;
-        if (precip === 'rain') return 2; // mm/h moderate
+        if (precip === 'rain') return 2; 
         if (precip === 'snow') return 1;
         if (precip === 'storm') return 8;
         return 0;
@@ -344,7 +344,7 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
 
     const lastFetchAt = lastFetchAtByKey.get(cacheKey) ?? 0;
     if (Date.now() - lastFetchAt < WEATHER_THROTTLE_MS) {
-      // Keep UI stable: do not spam; just show "Loading" until next opportunity.
+      
       return;
     }
 

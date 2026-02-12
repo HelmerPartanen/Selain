@@ -32,7 +32,7 @@ export const WallpaperNotice: React.FC<WallpaperNoticeProps> = ({
     showTimerRef.current = window.setTimeout(() => {
       setIsMounted(true);
 
-      // Wait one frame so the initial transform is painted
+      
       rafRef.current = requestAnimationFrame(() => {
         setIsEntering(true);
       });
@@ -83,9 +83,9 @@ export const WallpaperNotice: React.FC<WallpaperNoticeProps> = ({
         }`}
       style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
     >
-      {/* Header with gradient background */}
+      {}
       <div className="relative h-[140px] overflow-hidden bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10">
-        {/* Animated background blobs */}
+        {}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-4 left-4 h-32 w-32 rounded-full bg-blue-400 blur-3xl animate-pulse" />
           <div
@@ -103,7 +103,7 @@ export const WallpaperNotice: React.FC<WallpaperNoticeProps> = ({
         </IconButton>
       </div>
 
-      {/* Content section */}
+      {}
       <div className="border-t border-[color:var(--ui-border)] bg-[color:var(--ui-surface)] px-6 py-6">
         <h3 className="mb-2 text-base font-semibold text-[color:var(--ui-text)]">
           Personalize Your Space

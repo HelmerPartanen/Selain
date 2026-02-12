@@ -26,10 +26,10 @@ export const AnalogClockWidget: React.FC<ClockWidgetProps> = ({ widgetId }) => {
       id={widgetId}
       className="flex h-full w-full items-center justify-center rounded-3xl backdrop-blur-xl border border-[color:var(--ui-border)]"
     >
-      {/* Kellotaulu */}
+      {}
       <div className="relative h-full w-full rounded-3xl bg-[color:var(--ui-surface-subtle)]">
         
-        {/* Tuntimerkit */}
+        {}
         {Array.from({ length: 12 }).map((_, i) => {
           const angle = i * 30;
           const isMainHour = i % 3 === 0;
@@ -56,13 +56,13 @@ export const AnalogClockWidget: React.FC<ClockWidgetProps> = ({ widgetId }) => {
           );
         })}
 
-        {/* Numerot */}
+        {}
         <span className="absolute left-1/2 top-[12%] -translate-x-1/2 text-2xl font-light text-[color:var(--ui-text)]">12</span>
         <span className="absolute right-[12%] top-1/2 -translate-y-1/2 text-2xl font-light text-[color:var(--ui-text)]">3</span>
         <span className="absolute bottom-[12%] left-1/2 -translate-x-1/2 text-2xl font-light text-[color:var(--ui-text)]">6</span>
         <span className="absolute left-[12%] top-1/2 -translate-y-1/2 text-2xl font-light text-[color:var(--ui-text)]">9</span>
 
-        {/* Tuntiviisari */}
+        {}
         <span
           className="absolute left-1/2 top-1/2 w-[4px] h-[26%] rounded-full bg-[color:var(--ui-text)]"
           style={{
@@ -71,7 +71,7 @@ export const AnalogClockWidget: React.FC<ClockWidgetProps> = ({ widgetId }) => {
           }}
         />
 
-        {/* Minuuttiviisari */}
+        {}
         <span
           className="absolute left-1/2 top-1/2 w-[3px] h-[36%] rounded-full bg-[color:var(--ui-text)] opacity-80"
           style={{
@@ -80,7 +80,7 @@ export const AnalogClockWidget: React.FC<ClockWidgetProps> = ({ widgetId }) => {
           }}
         />
 
-        {/* Sekuntiviisari */}
+        {}
         <span
           className="absolute left-1/2 top-1/2 w-[2px] h-[40%] bg-red-500"
           style={{

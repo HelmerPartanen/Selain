@@ -1,13 +1,11 @@
-/**
- * Sun atmospheric effects: cloud occlusion and lens ghosts
- */
+
 
 import { toCssRgb, type Rgb } from './skyColor';
 import { mixColor, clamp01, smoothstep } from './skyUtils';
 import { SUN } from './sunConstants';
 import { getDiscClipPath, type SunSprite } from './sunSprite';
 
-// Deterministic hash for cheap pseudo-random
+
 const hash01 = (n: number) => {
   const x = Math.sin(n) * 43758.5453123;
   return x - Math.floor(x);
@@ -15,9 +13,7 @@ const hash01 = (n: number) => {
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
-/**
- * Draw cloud occlusion over the sun disc
- */
+
 export const drawCloudOcclusion = (
   ctx: CanvasRenderingContext2D,
   sunPos: { x: number; y: number },
@@ -32,12 +28,12 @@ export const drawCloudOcclusion = (
 
   const occ = clamp01(cloudCover * 1.1 + fogDensity * 0.4);
   const occAlpha = 0.08 + occ * 0.28;
-  // base animated wind plus contribution from real wind speed
+  
   const wind = time * (0.35 + cloudCover * 0.25) + (windSpeed || 0) * 0.02;
 
   ctx.save();
 
-  // Clip to disc in the current transformed space (squash already applied)
+  
   ctx.translate(sunPos.x, sunPos.y);
   ctx.clip(getDiscClipPath(sprite.discRadius * 0.95, sprite.discRadius * 0.95));
   ctx.translate(-sunPos.x, -sunPos.y);
@@ -70,9 +66,7 @@ export const drawCloudOcclusion = (
   ctx.filter = 'none';
 };
 
-/**
- * Draw cinematic lens ghosts (refraction artifacts)
- */
+
 export const drawLensGhosts = (
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -85,7 +79,7 @@ export const drawLensGhosts = (
   elevT: number,
   finalSunRGB: Rgb
 ) => {
-  // Only when sun is visible and not heavily clouded
+  
   if (sunVisibility <= 0.25 || cloudCover >= 0.85 || elevT <= 0.25) return;
 
   const cx = width * 0.5;
@@ -96,7 +90,7 @@ export const drawLensGhosts = (
   const nx = dx / dist;
   const ny = dy / dist;
 
-  // Reduce ghosts when sun near center (looks more natural)
+  
   const centerDist01 = clamp01(dist / Math.max(width, height));
   const ghostStrength =
     SUN.ghostBase *
@@ -130,7 +124,7 @@ export const drawLensGhosts = (
     ctx.fill();
   }
 
-  // Very faint "aperture" spot opposite the sun
+  
   const ox = cx + (cx - sunPos.x) * 0.22;
   const oy = cy + (cy - sunPos.y) * 0.22;
   ctx.filter = `blur(${sprite.discRadius * 0.55}px)`;

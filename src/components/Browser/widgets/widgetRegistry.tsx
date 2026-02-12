@@ -2,7 +2,7 @@ import React from 'react';
 import { AnalogClockWidget } from './AnalogClockWidget';
 import { DigitalClockWidget } from './DigitalClockWidget';
 import { FocusWidget } from './FocusWidget';
-// Lazy-load heavier or less-frequently-used widgets to improve initial load.
+
 const LazyNotes = React.lazy(() => import('./NotesWidget').then(m => ({ default: m.NotesWidget })));
 const LazyWeather = React.lazy(() => import('./WeatherWidget').then(m => ({ default: m.WeatherWidget })));
 import { WidgetDefinition, WidgetInstance, WidgetType } from './widgetTypes';

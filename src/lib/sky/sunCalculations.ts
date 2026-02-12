@@ -1,6 +1,4 @@
-/**
- * Sun rendering calculations: color, extinction, elevation mapping
- */
+
 
 import type { Rgb } from './skyColor';
 import { mixColor, smoothstep, lerp, clamp01 } from './skyUtils';
@@ -34,9 +32,7 @@ export interface SunColorResult {
   haloRadius: number;
 }
 
-/**
- * Calculate sun color, extinction, and tone based on elevation and atmosphere
- */
+
 export const calculateSunColor = (
   height: number,
   sunElevation: number,
@@ -47,18 +43,18 @@ export const calculateSunColor = (
   layers: SkyLayerColors,
   sunPos: { x: number; y: number }
 ): SunColorResult => {
-  // More realistic elevation mapping
+  
   const elevT = smoothstep(-2, 10, sunElevation);
 
-  // Refraction squash: strong only very near horizon
+  
   const squash = lerp(SUN.squashMin, 1.0, Math.pow(extinction, SUN.squashPow));
 
-  // Color shift: warm near horizon, neutral at high elevation
+  
   const warmRGB: Rgb = [1.0, 0.70, 0.50];
   const neutralRGB: Rgb = [1.0, 0.96, 0.88];
   const sunRGB = mixColor(warmRGB, neutralRGB, elevT);
 
-  // Wavelength-dependent atmospheric extinction (blue attenuates more)
+  
   const extinctionRGB: Rgb = [
     1.0,
     lerp(0.85, 1.0, extinction),
@@ -66,19 +62,19 @@ export const calculateSunColor = (
   ];
   const finalSunRGB = mixColor(sunRGB, extinctionRGB, 0.38);
 
-  // Sky luminance at sun for SDR tone scaling
+  
   const skyAtSun = sampleSkyColorAtY(layers, sunPos.y / Math.max(1, height));
   const skyLum = luminance(skyAtSun);
   const discToneScale = lerp(1.15, 0.55, smoothstep(0.35, 0.92, skyLum));
 
-  // Visibility/alpha (night/day blend + SDR clamp)
+  
   const discBaseAlpha = 0.95 * sunVisibility * elevT * discToneScale;
 
-  // Apparent disc radius: slightly smaller near horizon
+  
   const baseRadius = height * SUN.discRadiusFrac;
   const discRadius = baseRadius * lerp(0.6, 1.0, extinction);
 
-  // Halo radius grows with clouds/fog
+  
   const haloRadius =
     discRadius * (SUN.haloBase + cloudCover * SUN.haloCloudK + fogDensity * SUN.haloFogK);
 

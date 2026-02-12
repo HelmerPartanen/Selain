@@ -2,9 +2,7 @@ import { Star } from './skyStars';
 import { createStarField } from './skyStars';
 import { clamp01, mixColor, smoothstep } from './skyUtils';
 
-/* --------------------------------------------------
-   Types
--------------------------------------------------- */
+
 
 type StarEx = Star & {
   rgb: [number, number, number];
@@ -15,9 +13,7 @@ type StarEx = Star & {
   glowPhase: number;
 };
 
-/* --------------------------------------------------
-   State
--------------------------------------------------- */
+
 
 let starData: StarEx[] = [];
 let starFieldW = 0;
@@ -31,9 +27,7 @@ let twinkleIndices: number[] = [];
 type SpriteKey = string;
 const starSprites = new Map<SpriteKey, HTMLCanvasElement>();
 
-/* --------------------------------------------------
-   Star color temperature
--------------------------------------------------- */
+
 
 const sampleStarColor = (r01: number): [number, number, number] => {
   if (r01 < 0.1) {
@@ -47,9 +41,7 @@ const sampleStarColor = (r01: number): [number, number, number] => {
   }
 };
 
-/* --------------------------------------------------
-   Star sprite generation
--------------------------------------------------- */
+
 
 const getStarSprite = (
   radius: number,
@@ -73,16 +65,16 @@ const getStarSprite = (
   const cx = size / 2;
   const cy = size / 2;
 
-  // ---- HARD PINPOINT CORE (1 pixel) ----
+  
   ctx.fillStyle = `rgba(${rgb.map(v => Math.round(v * 255)).join(',')},1)`;
   ctx.fillRect(cx - 0.5, cy - 0.5, 1, 1);
 
-  // ---- SOFT ATMOSPHERIC GLOW ----
+  
   if (hasGlow) {
     const glow = ctx.createRadialGradient(cx, cy, 1.2, cx, cy, size * 0.6);
 
-    const g0 = 0.028 * glowStrength; // was 0.018
-const g1 = 0.012 * glowStrength; // was 0.007
+    const g0 = 0.028 * glowStrength; 
+const g1 = 0.012 * glowStrength; 
 
     glow.addColorStop(0, `rgba(${rgb.map(v => Math.round(v * 255)).join(',')},${g0})`);
     glow.addColorStop(0.25, `rgba(${rgb.map(v => Math.round(v * 255)).join(',')},${g1})`);
@@ -96,18 +88,14 @@ const g1 = 0.012 * glowStrength; // was 0.007
   return canvas;
 };
 
-/* --------------------------------------------------
-   Atmospheric extinction
--------------------------------------------------- */
+
 
 const starExtinction = (y: number, height: number) => {
   const alt = clamp01(1 - y / height);
   return 0.3 + 0.7 * Math.pow(alt, 1.2);
 };
 
-/* --------------------------------------------------
-   Build static star field
--------------------------------------------------- */
+
 
 export const ensureStarField = (width: number, height: number) => {
   if (
@@ -170,9 +158,7 @@ export const ensureStarField = (width: number, height: number) => {
   }
 };
 
-/* --------------------------------------------------
-   Draw stars
--------------------------------------------------- */
+
 
 export const drawStars = (
   ctx: CanvasRenderingContext2D,
@@ -195,7 +181,7 @@ export const drawStars = (
   const globalAlpha = nightFade * cloudVisibility;
   if (!starLayerCanvas || globalAlpha < 0.01) return;
 
-  // ---------- BASE STAR LAYER ----------
+  
   ctx.save();
   ctx.globalAlpha = globalAlpha;
   ctx.globalCompositeOperation = 'lighter';
@@ -204,7 +190,7 @@ export const drawStars = (
   ctx.imageSmoothingEnabled = true;
   ctx.restore();
 
-  // ---------- TWINKLE + GLOW OVERLAY ----------
+  
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   ctx.imageSmoothingEnabled = false;

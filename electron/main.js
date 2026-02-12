@@ -7,14 +7,14 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Reduce the maximum number of renderer processes to limit memory usage
-// (adjust as needed; too low can impact multi-tab performance)
+
+
 app.commandLine.appendSwitch('renderer-process-limit', '6');
 
 const isDev = !app.isPackaged;
 
-// Optionally disable hardware acceleration to save GPU memory. Set
-// DISABLE_GPU=1 in the environment to enable.
+
+
 if (process.env.DISABLE_GPU === '0') {
   try {
     app.disableHardwareAcceleration();
@@ -37,7 +37,7 @@ let adblockStats = { blocked: 0 };
 const HISTORY_LIMIT = 300;
 const pendingPermissions = new Map();
 
-// Simple logging function (disabled for now to prevent startup issues)
+
 const log = (message, error = null) => {
   if (error) {
     console.error(`[ERROR] ${message}:`, error);
@@ -145,17 +145,17 @@ const attachAdblocker = () => {
   if (adblockAttached) return;
   adblockAttached = true;
 
-  // Attach a lightweight request hook that will lazy-initialize the
-  // adblock engine on first real request. This avoids parsing large
-  // filter lists at startup which can spike memory.
+  
+  
+  
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
     if (!adBlockEnabled) {
       callback({});
       return;
     }
 
-    // If engine isn't ready, start async initialization and allow the
-    // request through for now. Initialization runs only once.
+    
+    
     if (!adblockEngine && !adblockInitializing) {
       adblockInitializing = true;
       initAdblocker().catch((err) => {
@@ -213,7 +213,7 @@ const createWindow = async () => {
   const shouldMaximize = Boolean(savedWindowState?.isMaximized);
   const shouldFullscreen = Boolean(savedWindowState?.isFullScreen);
 
-  // Resolve preload path correctly for packaged app
+  
   const preloadPath = app.isPackaged
     ? path.join(app.getAppPath(), 'electron', 'preload.cjs')
     : path.join(__dirname, 'preload.cjs');
@@ -229,7 +229,7 @@ const createWindow = async () => {
     titleBarStyle: 'hiddenInset',
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#000000' : '#ffffff',
     trafficLightPosition: { x: 14, y: 18 },
-    show: false, // prevent flicker until maximized
+    show: false, 
     icon: appIconPath,
     webPreferences: {
       preload: preloadPath,
@@ -239,7 +239,7 @@ const createWindow = async () => {
     }
   });
 
-  // load content
+  
   const distPath = app.isPackaged
     ? path.join(app.getAppPath(), 'dist', 'index.html')
     : path.join(__dirname, '../dist/index.html');
@@ -260,7 +260,7 @@ const createWindow = async () => {
     }
   }
 
-  // show with the last window state
+  
   mainWindow.once('ready-to-show', () => {
     if (shouldFullscreen) {
       mainWindow.setFullScreen(true);
@@ -401,7 +401,7 @@ const registerIpc = () => {
   });
 };
 
-// Global error handlers (synchronous to avoid blocking)
+
 process.on('uncaughtException', (error) => {
   const msg = 'Uncaught Exception in main process';
   console.error(msg, error);
@@ -423,12 +423,12 @@ app.whenReady().then(async () => {
   try {
     await createWindow();
     
-    // Register global shortcuts
+    
     globalShortcut.register('CommandOrControl+T', () => {
       mainWindow?.webContents.send('spotlight:open');
     });
     
-    // Add webContents error logging
+    
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.on('crashed', () => {
         log('Renderer process crashed');
@@ -439,7 +439,7 @@ app.whenReady().then(async () => {
       });
     }
     
-    // Use lazy adblock initialization to avoid parsing large filter lists at startup
+    
     attachAdblocker();
     log('App initialization complete');
   } catch (error) {
@@ -471,10 +471,10 @@ app.whenReady().then(async () => {
     contents.on('permission-request', (event, permission, callback, details) => {
       if (contents.getType() !== 'webview') return;
 
-      // Map Electron permission types to our types
+      
       const permissionMap = {
         'geolocation': 'geolocation',
-        'media': 'microphone', // media includes microphone/camera
+        'media': 'microphone', 
         'notifications': 'notifications',
         'clipboard-read': 'clipboard-read',
         'clipboard-write': 'clipboard-write'
@@ -495,18 +495,18 @@ app.whenReady().then(async () => {
         id,
         type: mappedPermission,
         origin,
-        tabId: 'current' // We could track tab IDs if needed
+        tabId: 'current' 
       });
     });
 
     contents.on('will-download', (event, item, webContents) => {
-      // Set download path to Downloads folder
+      
       const downloadsPath = app.getPath('downloads');
       const fileName = item.getFilename();
       const filePath = path.join(downloadsPath, fileName);
       item.setSavePath(filePath);
 
-      // Notify the renderer
+      
       mainWindow?.webContents.send('download:started', {
         fileName,
         filePath,
@@ -528,7 +528,7 @@ app.whenReady().then(async () => {
         mainWindow?.webContents.send('download:completed', {
           fileName,
           filePath,
-          state // 'completed', 'cancelled', 'interrupted'
+          state 
         });
       });
     });

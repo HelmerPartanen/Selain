@@ -1,4 +1,4 @@
-// skyRenderer.ts
+
 import { SkyLayerColors, SkyStateInput } from './skyTypes';
 import { toCssRgb } from './skyColor';
 import { clamp01 } from './skyUtils';
@@ -9,9 +9,9 @@ import { overlayNoise } from './skyNoise';
 import { drawStars } from './skyStarRenderer';
 import { drawThunderstormWithEffect } from './skyLightning';
 
-// ----------------------------
-// Main render
-// ----------------------------
+
+
+
 export const renderSkyGradient = (
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -27,7 +27,7 @@ export const renderSkyGradient = (
   const fogDensity = clamp01(state.weather.fogDensity);
   const windSpeed = state.weather.windSpeed ?? 0;
 
-  // 1) Base sky gradient
+  
   const gradient = ctx.createLinearGradient(0, 0, 0, height);
   gradient.addColorStop(0, toCssRgb(layers.upperSky));
   gradient.addColorStop(0.55, toCssRgb(layers.midSky));
@@ -38,7 +38,7 @@ export const renderSkyGradient = (
   const hasSunGlow = sunElevation > -18;
   const sunPos = hasSunGlow ? getSunScreenPosition(width, height, sunAzimuth, sunElevation) : undefined;
 
-  // 3) Sun glow + disc
+  
   let sunVisibility = 0;
   if (hasSunGlow && sunPos) {
     sunVisibility = Math.max(0.1, 1 - cloudCover);
@@ -58,7 +58,7 @@ export const renderSkyGradient = (
       ctx.fillRect(0, 0, width, height);
       ctx.restore();
 
-      // Sun disc (pass windSpeed to influence cloud motion)
+      
       drawSunDisc(
         ctx,
         width,
@@ -75,10 +75,10 @@ export const renderSkyGradient = (
     }
   }
 
-  // 3.5) Stars (before atmosphere so stars glow through clouds realistically)
+  
   drawStars(ctx, width, height, sunElevation, cloudCover, time);
 
-  // 4) Lightning (only during explicit storms)
+  
   const isStorm = state.weather.precipitation === 'storm';
   const stormIntensity = isStorm ? 1 : 0;
   let lightningEffect = null;
@@ -86,10 +86,10 @@ export const renderSkyGradient = (
     lightningEffect = drawThunderstormWithEffect(ctx, width, height, stormIntensity, layers.midSky, time);
   }
 
-  // 5) Atmosphere over sky/sun/stars/lightning
+  
   drawAtmosphere(ctx, width, height, layers, fogDensity, cloudCover, sunElevation, sunPos, sunVisibility, lightningEffect);
 
-  // 6) Ground bounce
+  
   const groundVisibility = Math.max(0, 1 - fogDensity);
   if (groundVisibility > 0.05) {
     const groundGrad = ctx.createLinearGradient(0, height * 1, 0, height);

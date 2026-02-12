@@ -1,4 +1,4 @@
-// skyColor.ts
+
 export type Rgb = [number, number, number];
 export type Oklab = [number, number, number];
 
@@ -86,9 +86,9 @@ export const clampRgb = (rgb: Rgb): Rgb => [
   clamp(rgb[2])
 ];
 
-// Optimized for high-frequency calls
+
 export const toCssRgb = (rgb: Rgb, alpha = 1) => {
-  // Bitwise OR 0 is slightly faster than Math.floor for positive numbers
+  
   const r = (clamp(rgb[0]) * 255) | 0;
   const g = (clamp(rgb[1]) * 255) | 0;
   const b = (clamp(rgb[2]) * 255) | 0;

@@ -55,7 +55,7 @@ export const TabBar = memo<TabBarProps>(({
               }
             `}
           >
-            {/* Favicon */}
+            {}
             <div className="mr-2 flex-shrink-0">
                {tab.favicon ? (
                  <img src={tab.favicon} alt="" className="w-3.5 h-3.5 opacity-80" />
@@ -69,10 +69,10 @@ export const TabBar = memo<TabBarProps>(({
               </div>
             )}
 
-            {/* Title */}
+            {}
             <span className="truncate flex-1 font-medium">{tab.title}</span>
 
-            {/* Close Button - Only visible on hover or if active */}
+            {}
             <button
               type="button"
               onClick={(e) => {
@@ -89,7 +89,7 @@ export const TabBar = memo<TabBarProps>(({
               <span className="text-[color:var(--ui-text-subtle)]"><LuX size={14} /></span>
             </button>
             
-            {/* Separator (visual trick for non-active tabs) */}
+            {}
             {!isVertical && !isActive && (
               <div className="absolute right-0 top-1.5 bottom-1.5 w-[1px] bg-[color:var(--ui-border)] group-hover:hidden" />
             )}

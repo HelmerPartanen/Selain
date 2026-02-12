@@ -1,16 +1,12 @@
-/**
- * Precipitation System Configuration
- * Defines the physics, rendering, and visual parameters for rain and snow
- * Philosophy: Perceptual realism over physical simulation
- */
+
 
 export interface IntensityLevel {
-  spawnRate: number; // particles per second
-  lifetime: number; // seconds
-  velocity: { y: [number, number] }; // y range in pixels/second
-  size: [number, number]; // size range (relative to base)
-  opacity: [number, number]; // opacity range (0-1)
-  drift?: number; // maximum horizontal drift amplitude (pixels)
+  spawnRate: number; 
+  lifetime: number; 
+  velocity: { y: [number, number] }; 
+  size: [number, number]; 
+  opacity: [number, number]; 
+  drift?: number; 
   description: string;
 }
 
@@ -28,9 +24,9 @@ export interface PrecipitationType {
 
 export interface MotionNoiseConfig {
   type: 'perlin';
-  scale: number; // 0-1, affects wavelength
-  speed: number; // animation speed multiplier
-  smoothness: number; // 0-1, lerp factor
+  scale: number; 
+  speed: number; 
+  smoothness: number; 
   appliesTo: {
     rain: string[];
     snow: string[];
@@ -52,8 +48,8 @@ export interface RenderingConfig {
 
 export interface WindConfig {
   directionDegrees: number;
-  strength: number; // 0-1 multiplier
-  affects: string[]; // array of velocity components
+  strength: number; 
+  affects: string[]; 
   gusts: boolean;
 }
 
@@ -131,9 +127,9 @@ export const PRECIPITATION_CONFIG: PrecipitationSystemConfig = {
 
   motionNoise: {
     type: 'perlin',
-    scale: 0.25,        // long wavelength = gentle float
-    speed: 0.08,        // slow temporal evolution
-    smoothness: 0.95,   // very smooth interpolation
+    scale: 0.25,        
+    speed: 0.08,        
+    smoothness: 0.95,   
     appliesTo: {
       rain: ['x'],
       snow: ['x', 'rotation', 'velocity.y']
@@ -195,7 +191,7 @@ export const PRECIPITATION_CONFIG: PrecipitationSystemConfig = {
       spawnRate: 45,
       lifetime: 7.5,
       velocity: { y: [35, 90] },
-      size: [0.69, 1.27], // was [0.6, 1.1]
+      size: [0.69, 1.27], 
       opacity: [0.3, 0.55],
       drift: 30,
       description: 'Sparse, floating flakes with high depth ambiguity'
@@ -204,7 +200,7 @@ export const PRECIPITATION_CONFIG: PrecipitationSystemConfig = {
       spawnRate: 110,
       lifetime: 8.0,
       velocity: { y: [45, 120] },
-      size: [0.86, 1.55], // was [0.75, 1.35]
+      size: [0.86, 1.55], 
       opacity: [0.35, 0.65],
       drift: 50,
       description: 'Layered snowfall with visible depth separation'
@@ -213,7 +209,7 @@ export const PRECIPITATION_CONFIG: PrecipitationSystemConfig = {
       spawnRate: 180,
       lifetime: 9.0,
       velocity: { y: [60, 150] },
-      size: [0.98, 1.84], // was [0.85, 1.6]
+      size: [0.98, 1.84], 
       opacity: [0.4, 0.7],
       drift: 65,
       description: 'Dense snowfall with foreground/background velocity stratification'

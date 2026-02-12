@@ -1,4 +1,4 @@
-// skyTypes.ts
+
 
 export type SkyTimeInput = {
   localTime: string;
@@ -19,10 +19,10 @@ export type SkyWeatherInput = {
   fogDensity: number;
   visibility: number;
   windSpeed?: number;
-  windDirection?: number; // degrees, 0 = north, 90 = east
-  precipitationAmount?: number; // mm/h
-  precipitationProbability?: number; // 0-1
-  weatherCode?: number; // WMO weather code for precise intensity mapping
+  windDirection?: number; 
+  precipitationAmount?: number; 
+  precipitationProbability?: number; 
+  weatherCode?: number; 
 };
 
 export type SkyEnvironmentInput = {

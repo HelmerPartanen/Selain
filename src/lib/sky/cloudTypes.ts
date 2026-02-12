@@ -1,27 +1,27 @@
-// cloudTypes.ts
-// Different cloud configurations based on weather conditions
+
+
 
 export interface CloudTypeConfig {
-  // Size and shape parameters
-  sizeScale: number; // Overall cloud size multiplier (affects both horizontal and vertical)
-  shapeScale: number; // How stretched/tall clouds are (vertical scale)
-  densityScale: number; // Overall cloud density multiplier
-  detailScale: number; // Detail noise scale
-  coverageBias: number; // Bias toward more/less coverage
+  
+  sizeScale: number; 
+  shapeScale: number; 
+  densityScale: number; 
+  detailScale: number; 
+  coverageBias: number; 
 
-  // Movement and animation
-  windSpeedMultiplier: number; // How much wind affects cloud movement
-  turbulence: number; // Random movement turbulence
+  
+  windSpeedMultiplier: number; 
+  turbulence: number; 
 
-  // Lighting and appearance
-  brightnessMultiplier: number; // Overall brightness
-  contrastMultiplier: number; // Contrast between light/dark areas
-  saturationMultiplier: number; // Color saturation
+  
+  brightnessMultiplier: number; 
+  contrastMultiplier: number; 
+  saturationMultiplier: number; 
 
-  // Special effects
-  anvilClouds: boolean; // Tall thunderstorm anvil clouds
-  wispyEdges: boolean; // Soft, wispy cloud edges
-  layeredEffect: boolean; // Multiple cloud layers
+  
+  anvilClouds: boolean; 
+  wispyEdges: boolean; 
+  layeredEffect: boolean; 
 }
 
 export type CloudType =
@@ -40,7 +40,7 @@ export type CloudType =
   | 'fog'
   | 'mist';
 
-// Cloud type configurations based on WMO weather codes and conditions
+
 export const CLOUD_TYPE_CONFIGS: Record<CloudType, CloudTypeConfig> = {
   clear: {
     sizeScale: 1.0,
@@ -267,7 +267,7 @@ export const CLOUD_TYPE_CONFIGS: Record<CloudType, CloudTypeConfig> = {
   }
 };
 
-// Determine cloud type based on weather conditions
+
 export function determineCloudType(weather: {
   weatherCode?: number;
   cloudCover: number;
@@ -278,17 +278,17 @@ export function determineCloudType(weather: {
 }): CloudType {
   const { weatherCode, cloudCover, precipitation, precipitationAmount, fogDensity, visibility } = weather;
 
-  // Handle fog/mist conditions first
+  
   if (fogDensity > 0.6 || visibility < 2) {
     return visibility < 1 ? 'fog' : 'mist';
   }
 
-  // Handle thunderstorm
+  
   if (precipitation === 'storm' || (weatherCode && weatherCode >= 95)) {
     return 'thunderstorm';
   }
 
-  // Handle precipitation
+  
   if (precipitation === 'rain') {
     const amount = precipitationAmount || 0;
     if (amount > 7) return 'heavy_rain';
@@ -303,12 +303,12 @@ export function determineCloudType(weather: {
     return 'light_snow';
   }
 
-  // Prioritize weather codes for cloud type determination
-  if (weatherCode === 3) return 'overcast'; // Overcast
-  if (weatherCode && weatherCode >= 80 && weatherCode <= 82) return 'light_rain'; // Showers
-  if (weatherCode && weatherCode >= 85 && weatherCode <= 86) return 'light_snow'; // Snow showers
+  
+  if (weatherCode === 3) return 'overcast'; 
+  if (weatherCode && weatherCode >= 80 && weatherCode <= 82) return 'light_rain'; 
+  if (weatherCode && weatherCode >= 85 && weatherCode <= 86) return 'light_snow'; 
 
-  // Handle clear/cloudy conditions based on cloud cover
+  
   if (cloudCover < 0.2) return 'clear';
   if (cloudCover < 0.4) return 'few_clouds';
   if (cloudCover < 0.6) return 'scattered';

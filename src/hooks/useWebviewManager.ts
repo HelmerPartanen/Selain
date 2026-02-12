@@ -46,7 +46,7 @@ export const useWebviewManager = ({
           try {
             await webview.removeInsertedCSS(key);
           } catch {
-            // Ignore removal failures.
+            
           }
         }
       }
@@ -62,7 +62,7 @@ export const useWebviewManager = ({
           await webview.executeJavaScript(scripts.join('\n'), true);
         }
       } catch {
-        // Ignore cosmetic injection failures.
+        
       }
     },
     []
@@ -173,18 +173,18 @@ export const useWebviewManager = ({
     };
   }, []);
 
-  // Suspend inactive webviews to save memory
+  
   useEffect(() => {
     tabs.forEach(tab => {
       const webview = webviewsRef.current[tab.id];
       if (!webview) return;
       if (tab.id === activeTabId) {
-        // Resume active webview
+        
         try {
           if (typeof webview.resume === 'function') webview.resume();
         } catch {}
       } else {
-        // Pause inactive webview
+        
         try {
           if (typeof webview.pause === 'function') webview.pause();
         } catch {}

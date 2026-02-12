@@ -166,7 +166,7 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
         const normalized = normalizeUrl(trimmed);
         items.push({
           id: `url-${normalized}`,
-          label: normalized.replace(/^https?:\/\
+          label: normalized.replace(/^https?:\/\//, ''),
           value: normalized,
           description: 'Open website',
           hint: 'Direct',
@@ -189,7 +189,7 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
         id: `tab-${tab.id}`,
         label: tab.title || tab.url,
         value: tab.url,
-        description: tab.url.replace(/^https?:\/\
+        description: tab.url.replace(/^https?:\/\//, ''),
         hint: 'Open tab',
         icon: tab.favicon ? (
           <img
@@ -230,7 +230,7 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
         id: `history-${index}-${item.url}`,
         label: item.title || item.url,
         value: item.url,
-        description: item.url.replace(/^https?:\/\
+        description: item.url.replace(/^https?:\/\//, ''),
         hint: 'History',
         icon: <LuRotateCcw size={14} />,
         type: 'url' as const

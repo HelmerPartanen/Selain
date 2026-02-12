@@ -57,7 +57,7 @@ export const SettingsPage = memo(({
   }, [initialSection]);
 
   return (
-    <div className="h-full w-full overflow-hidden bg-[color:var(--ui-base)]">
+    <div className="h-full w-full overflow-hidden">
       <div className="flex h-full p-8">
         <div className="flex h-full w-full gap-6 rounded-3xl bg-[color:var(--ui-surface)] shadow-lg p-4 overflow-hidden">
 

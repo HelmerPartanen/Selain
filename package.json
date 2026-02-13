@@ -49,9 +49,27 @@
       "electron/filters/**/*",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": "WidevineCdm",
+        "to": "WidevineCdm"
+      }
+    ],
     "asar": true,
     "compression": "maximum",
     "afterPack": "electron/afterPack.cjs",
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "src/assets/AppIcon.ico",
+      "uninstallerIcon": "src/assets/AppIcon.ico",
+      "installerHeaderIcon": "src/assets/AppIcon.ico"
+    },
     "directories": {
       "output": "release",
       "buildResources": "src/assets"

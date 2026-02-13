@@ -8,6 +8,9 @@ interface AddressBarProps {
   loading: boolean;
   searchEngine: SearchEngine;
   customSearchUrl: string;
+  openInNewTab?: boolean;
+  onOpenNewTab?: (url: string) => void;
+  middleClickPaste?: boolean;
 }
 
 const AddressBarInner: React.FC<AddressBarProps> = ({
@@ -15,7 +18,10 @@ const AddressBarInner: React.FC<AddressBarProps> = ({
   onNavigate,
   loading,
   searchEngine,
-  customSearchUrl
+  customSearchUrl,
+  openInNewTab = false,
+  onOpenNewTab,
+  middleClickPaste = false
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputVal, setInputVal] = useState("");
@@ -32,6 +38,18 @@ const AddressBarInner: React.FC<AddressBarProps> = ({
       return url;
     }
   }, [url, isWelcome]);
+
+  const handleMiddleClick = useCallback(async (e: React.MouseEvent<HTMLInputElement>) => {
+    if (e.button !== 1 || !middleClickPaste) return;
+    e.preventDefault();
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setInputVal(text);
+        inputRef.current?.focus();
+      }
+    } catch {}
+  }, [middleClickPaste]);
 
   const [isFocused, setIsFocused] = useState(false);
 
@@ -179,8 +197,20 @@ const AddressBarInner: React.FC<AddressBarProps> = ({
     e.preventDefault();
     const target = normalizeTarget(inputVal);
     if (!target) return;
-    onNavigate(target);
+    // If "open search results in new tab" is enabled and this looks like a search
+    if (openInNewTab && onOpenNewTab && !isLikelyDirectUrl(inputVal.trim())) {
+      onOpenNewTab(target);
+    } else {
+      onNavigate(target);
+    }
     inputRef.current?.blur();
+  };
+
+  /** Check if user typed a direct URL vs a search query */
+  const isLikelyDirectUrl = (val: string) => {
+    if (!val) return false;
+    if (val.startsWith('http') || val.startsWith('browser://')) return true;
+    return val.includes('.') && !val.includes(' ');
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -263,6 +293,7 @@ const AddressBarInner: React.FC<AddressBarProps> = ({
               onKeyDown={handleKeyDown}
               onFocus={handleFocus}
               onBlur={handleBlur}
+              onMouseDown={handleMiddleClick}
               aria-label="Address bar"
               placeholder={placeholderText}
               spellCheck={false}

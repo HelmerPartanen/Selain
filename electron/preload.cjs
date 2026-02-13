@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addHistory: (entry) => ipcRenderer.invoke('history:add', entry),
   clearHistory: () => ipcRenderer.invoke('history:clear'),
   respondPermission: (id, granted) => ipcRenderer.invoke('permission:respond', id, granted),
+  applyLocalSettings: (settings) => ipcRenderer.invoke('local-settings:apply', settings),
   onAdblockStats: (handler) => {
     const listener = (_event, stats) => handler(stats);
     ipcRenderer.on('adblock:stats', listener);

@@ -14,6 +14,7 @@ import { INITIAL_TABS } from '@/lib/constants';
 import { BrowserToolbar } from '@/features/home/components/BrowserToolbar';
 import { UnsavedChangesDialog } from '@/features/home/components/UnsavedChangesDialog';
 import { useSettings } from '@/hooks/useSettings';
+import { useApplyDomSettings, getSetting } from '@/hooks/useLocalSettings';
 import { WallpaperNotice } from '@/features/home/components/WallpaperNotice';
 import { AdBlockWidget } from '@/features/home/components/AdBlockWidget';
 import { OnboardingFlow } from '@/features/home/components/OnboardingFlow';
@@ -30,6 +31,55 @@ const WALLPAPER_NOTICE_TARGET_KEY = 'wallpaperNoticeTarget';
 const WALLPAPER_NOTICE_COUNT_KEY = 'wallpaperNoticeVisitCount';
 const SHOW_ONBOARDING_EVERY_START = false;
 const ONBOARDING_SEEN_KEY = 'onboardingSeen';
+const TABS_STATE_KEY = 'browser:savedTabs';
+
+/** Save current tabs to localStorage for session restore */
+const saveTabState = (tabs: Tab[], activeTabId: string) => {
+  try {
+    const serializable = tabs.map(t => ({
+      id: t.id,
+      title: t.title,
+      url: t.url,
+      favicon: t.favicon,
+    }));
+    localStorage.setItem(TABS_STATE_KEY, JSON.stringify({ tabs: serializable, activeTabId }));
+  } catch {}
+};
+
+/** Load saved tabs. Returns null if none saved or setting disabled. */
+const loadSavedTabs = (): { tabs: Tab[]; activeTabId: string } | null => {
+  try {
+    const raw = localStorage.getItem(TABS_STATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed?.tabs) || parsed.tabs.length === 0) return null;
+    const restored: Tab[] = parsed.tabs.map((t: any) => ({
+      id: t.id || String(Date.now()),
+      title: t.title || 'Restored Tab',
+      url: t.url || 'browser://newtab',
+      favicon: t.favicon,
+      loading: false,
+      canGoBack: false,
+      canGoForward: false,
+    }));
+    return { tabs: restored, activeTabId: parsed.activeTabId || restored[0].id };
+  } catch {
+    return null;
+  }
+};
+
+/** Determine initial tabs based on startupPage and restoreTabs settings */
+const getInitialTabs = (): { tabs: Tab[]; activeTabId: string } => {
+  const startupPage = getSetting('settings:startupPage');
+  const restoreTabs = getSetting('settings:restoreTabs');
+
+  if ((startupPage === 'restoreSession' || restoreTabs)) {
+    const saved = loadSavedTabs();
+    if (saved) return saved;
+  }
+
+  return { tabs: INITIAL_TABS, activeTabId: INITIAL_TABS[0].id };
+};
 
 const DEFAULT_SETTINGS: AppSettings = {
   theme: Theme.SYSTEM,
@@ -43,8 +93,8 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 const Home: React.FC = () => {
-  const [tabs, setTabs] = useState<Tab[]>(INITIAL_TABS);
-  const [activeTabId, setActiveTabId] = useState<string>(INITIAL_TABS[0].id);
+  const [tabs, setTabs] = useState<Tab[]>(() => getInitialTabs().tabs);
+  const [activeTabId, setActiveTabId] = useState<string>(() => getInitialTabs().activeTabId);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [addressBarFocused, setAddressBarFocused] = useState(false);
   const [lastExternalUrlById, setLastExternalUrlById] = useState<Record<string, string>>({});
@@ -99,6 +149,16 @@ const Home: React.FC = () => {
     applySettings,
     handleSaveSettings
   } = useSettings(DEFAULT_SETTINGS);
+
+  // Apply DOM-level settings (font size, reduce motion, animation speed, etc.)
+  const localSettings = useApplyDomSettings();
+
+  // Persist tabs for session restore
+  useEffect(() => {
+    if (getSetting('settings:restoreTabs') || getSetting('settings:startupPage') === 'restoreSession') {
+      saveTabState(tabs, activeTabId);
+    }
+  }, [tabs, activeTabId]);
 
   const activeTab = useMemo(
     () => tabs.find((tab) => tab.id === activeTabId) || tabs[0],
@@ -307,9 +367,19 @@ const Home: React.FC = () => {
       canGoBack: false,
       canGoForward: false
     };
-    setTabs((prev) => [...prev, newTab]);
+    const tabPosition = getSetting('settings:newTabPosition');
+    setTabs((prev) => {
+      if (tabPosition === 'afterCurrent') {
+        const currentIndex = prev.findIndex((t) => t.id === activeTabId);
+        const insertAt = currentIndex >= 0 ? currentIndex + 1 : prev.length;
+        const next = [...prev];
+        next.splice(insertAt, 0, newTab);
+        return next;
+      }
+      return [...prev, newTab];
+    });
     setActiveTabId(newId);
-  }, []);
+  }, [activeTabId]);
 
   const handleNewTab = useCallback(() => {
     createTab('browser://welcome');
@@ -750,6 +820,38 @@ const Home: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
   }, [tabs, activeTabId, handleNewTab, handleCloseTab]);
 
+  // Confirm-before-close: add beforeunload handler
+  useEffect(() => {
+    if (!localSettings['settings:confirmBeforeClose']) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      if (tabs.length > 1) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [localSettings['settings:confirmBeforeClose'], tabs.length]);
+
+  // Clear-on-exit: register cleanup when window closes
+  useEffect(() => {
+    if (!localSettings['settings:clearOnExit']) return;
+    const handler = () => {
+      try {
+        // Clear browsing-related data
+        const protectedKeys = ['settings:', 'onboardingSeen', 'wallpaperNotice'];
+        const allKeys = Object.keys(localStorage);
+        allKeys.forEach((key) => {
+          if (protectedKeys.some((pk) => key.startsWith(pk))) return;
+          if (key === 'onboardingSeen') return;
+          localStorage.removeItem(key);
+        });
+      } catch {}
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [localSettings['settings:clearOnExit']]);
+
   return (
       <div className="relative isolate flex h-screen w-screen flex-col overflow-hidden text-sm select-none font-sans text-[color:var(--ui-text)] bg-[color:var(--ui-base)]">
       {backgroundType === 'wallpaper' && wallpaper && (
@@ -796,6 +898,9 @@ const Home: React.FC = () => {
                 loading={activeTab.loading}
                 searchEngine={searchEngine}
                 customSearchUrl={customSearchUrl}
+                openInNewTab={localSettings['settings:searchOpenNewTab']}
+                onOpenNewTab={handleOpenNewTab}
+                middleClickPaste={localSettings['settings:middleClickPaste']}
               />
             </div>
           </div>
@@ -812,6 +917,9 @@ const Home: React.FC = () => {
             activeTabId={activeTabId}
             onSwitch={handleSwitchTab}
             onClose={handleCloseTab}
+            doubleClickClose={localSettings['settings:doubleClickTabClose']}
+            tabStyle={localSettings['settings:tabStyle']}
+            tabHoverPreview={localSettings['settings:tabHoverPreview']}
           />
         </div>
       </div>
@@ -825,7 +933,7 @@ const Home: React.FC = () => {
           settingsActive={settingsOpen}
           settingsSection={settingsSection}
           adBlockEnabled={adBlockEnabled}
-          position="left"
+          position={localSettings['settings:sidebarPosition']}
         />
 
         <main className="flex-1 relative bg-transparent overflow-hidden rounded-t-xl">
@@ -920,6 +1028,8 @@ const Home: React.FC = () => {
               historyItems={historyItems}
               historySorted={historySorted}
               topSites={topSites}
+              searchSuggestionsEnabled={localSettings['settings:searchSuggestions']}
+              searchHistoryEnabled={localSettings['settings:searchHistory']}
             />
           </div>
         </div>

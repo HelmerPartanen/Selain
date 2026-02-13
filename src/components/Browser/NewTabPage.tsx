@@ -6,6 +6,7 @@ const DeveloperPanel = React.lazy(() => import('./DeveloperPanel').then(m => ({ 
 import { widgetDefinitions, widgetList } from './widgets/widgetRegistry';
 import type { WidgetInstance, WidgetType } from './widgets/widgetTypes';import { useGlobalWeather } from '@/hooks';
 import { SkyBackground } from './widgets/SkyBackground';
+import { getSetting } from '@/hooks/useLocalSettings';
 const STORAGE_KEY = 'newtab-widgets-v1';
 
 const DEFAULT_WIDGETS: WidgetInstance[] = [
@@ -117,22 +118,22 @@ export const NewTabPage: React.FC = () => {
       window.clearTimeout(saveTimerRef.current);
     }
     saveTimerRef.current = window.setTimeout(() => {
+      const payload = {
+        widgets,
+        layout: layout.map(({ i, x, y, w, h, minW, minH }) => ({
+          i,
+          x,
+          y,
+          w,
+          h,
+          minW,
+          minH
+        }))
+      };
       try {
-        const payload = {
-          widgets,
-          layout: layout.map(({ i, x, y, w, h, minW, minH }) => ({
-            i,
-            x,
-            y,
-            w,
-            h,
-            minW,
-            minH
-          }))
-        };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       } catch (e) {
-        if (e instanceof QuotaExceededError) {
+        if (e instanceof DOMException && e.name === 'QuotaExceededError') {
           console.warn('localStorage quota exceeded; clearing old widget data');
           try {
             const allKeys = Object.keys(localStorage).filter(k => k.startsWith('newtab-'));
@@ -242,7 +243,6 @@ export const NewTabPage: React.FC = () => {
           <WidgetGrid
             widgets={widgets}
             layout={layout}
-            onLayoutChange={handleLayoutChange}
             onLayoutCommit={handleLayoutCommit}
             onRemoveWidget={removeWidget}
           />
@@ -258,9 +258,11 @@ export const NewTabPage: React.FC = () => {
         onClearWidgets={clearWidgets}
       />
 
-      <Suspense fallback={null}>
-        <DeveloperPanel />
-      </Suspense>
+      {getSetting('settings:devPanelEnabled') && (
+        <Suspense fallback={null}>
+          <DeveloperPanel />
+        </Suspense>
+      )}
     </div>
   );
 };

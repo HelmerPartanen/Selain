@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, nativeTheme, session, globalShortcut } from 'electron';
 import { FiltersEngine, Request } from '@ghostery/adblocker';
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -23,7 +24,35 @@ app.commandLine.appendSwitch('network-quality-estimator-set-max-quality', 'Slow-
 
 const isDev = !app.isPackaged;
 
-if (process.env.DISABLE_GPU !== '0') {
+// Read local settings from settings file for Electron-level configuration
+const getLocalSettingsPath = () => path.join(app.getPath('userData'), 'local-settings.json');
+
+const readLocalSettings = async () => {
+  try {
+    const raw = await fs.readFile(getLocalSettingsPath(), 'utf-8');
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+};
+
+const writeLocalSettings = async (settings) => {
+  await fs.writeFile(getLocalSettingsPath(), JSON.stringify(settings, null, 2), 'utf-8');
+};
+
+/** Read local settings synchronously (needed for pre-ready checks like hardware acceleration) */
+const readLocalSettingsSync = () => {
+  try {
+    const raw = fsSync.readFileSync(getLocalSettingsPath(), 'utf-8');
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+};
+
+// Apply hardware acceleration setting from saved prefs (must happen before app.ready)
+const savedLocalSettings = readLocalSettingsSync();
+if (savedLocalSettings['settings:hardwareAcceleration'] === false) {
   try {
     app.disableHardwareAcceleration();
   } catch (e) {
@@ -455,6 +484,46 @@ const registerIpc = () => {
       pendingPermissions.delete(id);
     }
   });
+
+  // Local settings sync: renderer can push settings that need Electron-level handling
+  ipcMain.handle('local-settings:apply', async (_event, settings) => {
+    try {
+      await writeLocalSettings(settings);
+
+      // Apply session-level settings
+      const ses = session.defaultSession;
+
+      // Do Not Track header
+      if (settings['settings:doNotTrack']) {
+        ses.webRequest.onBeforeSendHeaders({ urls: ['*://*/*'] }, (details, callback) => {
+          details.requestHeaders['DNT'] = '1';
+          details.requestHeaders['Sec-GPC'] = '1';
+          callback({ requestHeaders: details.requestHeaders });
+        });
+      } else {
+        // Remove DNT header hook if disabled
+        ses.webRequest.onBeforeSendHeaders(null);
+      }
+
+      // DNS prefetch
+      if (settings['settings:dnsPrefetch'] === false) {
+        ses.enableNetworkEmulation({ offline: false, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
+      }
+
+      // Spellcheck
+      if (typeof settings['settings:spellCheck'] === 'boolean') {
+        ses.setSpellCheckerEnabled(settings['settings:spellCheck']);
+      }
+
+      // Clear on exit: mark for handling in window close
+      // (stored in file, checked on app quit)
+
+      return true;
+    } catch (err) {
+      console.error('Failed to apply local settings:', err);
+      return false;
+    }
+  });
 };
 
 
@@ -634,6 +703,14 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    // Clear browsing data on exit if enabled
+    try {
+      const exitSettings = readLocalSettingsSync();
+      if (exitSettings['settings:clearOnExit']) {
+        session.defaultSession.clearStorageData().catch(() => {});
+        session.defaultSession.clearCache().catch(() => {});
+      }
+    } catch {}
     globalShortcut.unregisterAll();
     app.quit();
   }

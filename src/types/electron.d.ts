@@ -18,6 +18,7 @@ declare global {
     addHistory: (entry: HistoryItem) => Promise<HistoryItem[]>;
     clearHistory: () => Promise<HistoryItem[]>;
     respondPermission: (id: string, granted: boolean) => Promise<void>;
+    applyLocalSettings: (settings: Record<string, any>) => Promise<boolean>;
     onAdblockStats: (handler: (stats: { blocked: number }) => void) => () => void;
     onNewWindow: (handler: (url: string) => void) => () => void;
     onPermissionRequest: (handler: (request: PermissionRequest) => void) => () => void;

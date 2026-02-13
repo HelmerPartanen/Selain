@@ -163,7 +163,7 @@ input, textarea, select, button {
   --ui-base: #000000;
 
   /* Surfaces */
-  --ui-surface: rgba(28, 28, 30, 0.75);
+  --ui-surface: rgba(28, 28, 30, 1);
   --ui-surface-strong: rgba(44, 44, 46, 0.9);
   --ui-surface-muted: rgba(28, 28, 30, 0.6);
   --ui-surface-subtle: rgba(28, 28, 30, 0.45);
@@ -364,19 +364,38 @@ input, textarea, select, button {
 }
 
 /* =========================
+   Settings-driven CSS custom properties
+   ========================= */
+:root {
+  --animation-speed: 200ms;
+  --ui-density-gap: 4px;
+  --ui-corner-radius: 12px;
+  --ui-corner-radius-lg: 16px;
+}
+
+/* Reduce motion: disable all transitions & animations */
+.reduce-motion,
+.reduce-motion * {
+  animation-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 0ms !important;
+  transition-delay: 0ms !important;
+}
+
+/* =========================
    Transitions and animations
    ========================= */
 @layer components {
   .transition-smooth {
-    transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: all var(--animation-speed, 200ms) cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .transition-smooth-fast {
-    transition: all 120ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: all calc(var(--animation-speed, 200ms) * 0.6) cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .transition-smooth-slow {
-    transition: all 350ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: all calc(var(--animation-speed, 200ms) * 1.75) cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .group-hover\:scale-up {

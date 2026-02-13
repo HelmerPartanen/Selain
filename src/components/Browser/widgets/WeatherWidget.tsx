@@ -25,6 +25,7 @@ import { updateDevPanelState } from '@/lib/devPanelState';
 import { SkyBackground } from './SkyBackground';
 import { LuMapPin, LuSettings } from 'react-icons/lu';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
+import { getSetting } from '@/hooks/useLocalSettings';
 
 
 const WEATHER_LOCATION_KEY = 'newtab-weather-location';
@@ -370,7 +371,8 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
     const controller = new AbortController();
     const referenceDate = new Date();
 
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${resolvedLocation.latitude}&longitude=${resolvedLocation.longitude}&current_weather=true&hourly=precipitation,precipitation_probability,windspeed_10m,visibility,cloudcover&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&windspeed_unit=kmh`;
+    const tempUnit = getSetting('settings:weatherUnits') === 'fahrenheit' ? '&temperature_unit=fahrenheit' : '';
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${resolvedLocation.latitude}&longitude=${resolvedLocation.longitude}&current_weather=true&hourly=precipitation,precipitation_probability,windspeed_10m,visibility,cloudcover&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&windspeed_unit=kmh${tempUnit}`;
 
     const request = fetch(url, { signal: controller.signal })
       .then((r) => {
@@ -602,9 +604,11 @@ export const WeatherWidget = memo<WeatherWidgetProps>(({ location }) => {
           <div className="text-sm font-medium text-white/90 truncate max-w-[60%]">
             {state.location}
           </div>
-          <div className="text-sm font-medium text-white/80">
-            {state.highLow}
-          </div>
+          {getSetting('settings:weatherShowForecast') && (
+            <div className="text-sm font-medium text-white/80">
+              {state.highLow}
+            </div>
+          )}
         </div>
       </div>
     </div>

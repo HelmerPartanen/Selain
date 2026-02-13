@@ -12,6 +12,7 @@ import {
   getSeason
 } from '@/lib/sky/skyAstronomy';
 import { SkyStateInput } from '@/lib/sky/skyTypes';
+import { getSetting } from '@/hooks/useLocalSettings';
 
 const WEATHER_LOCATION_KEY = 'newtab-weather-location';
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
@@ -142,9 +143,17 @@ const parseTime = (value?: string) => {
 export const useGlobalWeather = () => {
   const [weatherState, setWeatherState] = useState<WeatherState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
   const devPanel = useDevPanelState();
   const devWeather = devPanel.weather;
   const now = useDevTime();
+
+  // Auto-refresh timer: re-trigger fetch every 10 minutes when enabled
+  useEffect(() => {
+    if (!getSetting('settings:weatherAutoRefresh')) return;
+    const id = window.setInterval(() => setRefreshTick(t => t + 1), WEATHER_CACHE_TTL_MS);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const storedLocation = getStoredLocation();
@@ -241,7 +250,8 @@ export const useGlobalWeather = () => {
     const controller = new AbortController();
     const referenceDate = new Date();
 
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${storedLocation.latitude}&longitude=${storedLocation.longitude}&current_weather=true&hourly=precipitation,precipitation_probability,windspeed_10m,winddirection_10m,visibility,cloudcover&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&windspeed_unit=kmh`;
+    const tempUnit = getSetting('settings:weatherUnits') === 'fahrenheit' ? '&temperature_unit=fahrenheit' : '';
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${storedLocation.latitude}&longitude=${storedLocation.longitude}&current_weather=true&hourly=precipitation,precipitation_probability,windspeed_10m,winddirection_10m,visibility,cloudcover&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&windspeed_unit=kmh${tempUnit}`;
 
     const request = fetch(url, { signal: controller.signal })
       .then((r) => {
@@ -365,7 +375,7 @@ export const useGlobalWeather = () => {
       });
 
     return () => controller.abort();
-  }, [devWeather]);
+  }, [devWeather, refreshTick]);
 
   const sunPos = getSunPosition(now, weatherState?.latitude ?? 0, weatherState?.longitude ?? 0);
   const moonPhase = estimateMoonPhase(now);

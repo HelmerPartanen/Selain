@@ -1,20 +1,23 @@
 import React, { useMemo } from 'react';
 import { useDevTime } from '@/lib/devPanelState';
+import { getSetting } from '@/hooks/useLocalSettings';
 
 const getPart = (parts: Intl.DateTimeFormatPart[], type: string) =>
   parts.find((part) => part.type === type)?.value ?? '';
 
 export const DigitalClockWidget: React.FC = () => {
   const now = useDevTime();
+  const clockFormat = getSetting('settings:clockFormat');
 
   const timeFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(undefined, {
         hour: 'numeric',
         minute: '2-digit',
-        second: '2-digit'
+        second: '2-digit',
+        hour12: clockFormat === '12h'
       }),
-    []
+    [clockFormat]
   );
   const dateFormatter = useMemo(
     () =>

@@ -2,6 +2,14 @@ import React, { Suspense } from 'react';
 import { LuMinus } from 'react-icons/lu';
 import { widgetDefinitions } from './widgetRegistry';
 import { WidgetInstance } from './widgetTypes';
+import { getSetting } from '@/hooks/useLocalSettings';
+
+/** Returns true if the widget type is currently hidden by settings */
+const isWidgetHidden = (type: string): boolean => {
+  if ((type === 'digitalClock' || type === 'analogClock') && !getSetting('settings:showClock')) return true;
+  if (type === 'weather' && !getSetting('settings:showWeather')) return true;
+  return false;
+};
 
 interface WidgetRendererProps {
   widget: WidgetInstance;
@@ -11,12 +19,8 @@ interface WidgetRendererProps {
 const WidgetRendererInner: React.FC<WidgetRendererProps> = ({ widget, onRemove }) => {
   const definition = widgetDefinitions[widget.type];
 
-  if (!definition) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-[color:var(--ui-surface)] text-sm text-[color:var(--ui-text-muted)]">
-        Missing widget: {widget.type}
-      </div>
-    );
+  if (!definition || isWidgetHidden(widget.type)) {
+    return null;
   }
 
   return (

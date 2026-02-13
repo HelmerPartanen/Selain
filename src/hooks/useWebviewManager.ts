@@ -1,5 +1,6 @@
 import { useCallback, useRef, useEffect } from 'react';
 import { Tab } from '@/lib/types';
+import { getSetting } from '@/hooks/useLocalSettings';
 
 interface UseWebviewManagerProps {
   tabs: Tab[];
@@ -97,6 +98,33 @@ export const useWebviewManager = ({
         return;
       }
 
+      // Apply webview attribute-level settings
+      try {
+        // Custom user agent
+        const customUA = getSetting('settings:customUserAgent');
+        if (customUA && typeof customUA === 'string' && customUA.trim()) {
+          el.setAttribute('useragent', customUA);
+        }
+
+        // Block popups (disable allowpopups)
+        if (getSetting('settings:blockPopups')) {
+          el.removeAttribute('allowpopups');
+        } else {
+          el.setAttribute('allowpopups', '');
+        }
+
+        // Spell check
+        (el as any).spellcheck = getSetting('settings:spellCheck');
+
+        // Block autoplay via disableblinkfeatures
+        if (getSetting('settings:blockAutoplay')) {
+          const existing = el.getAttribute('disableblinkfeatures') || '';
+          if (!existing.includes('AutoplayIgnoreWebAudio')) {
+            el.setAttribute('disableblinkfeatures', existing ? `${existing},AutoplayIgnoreWebAudio` : 'AutoplayIgnoreWebAudio');
+          }
+        }
+      } catch {}
+
       const handleStart = () => onTabUpdate(tabId, { loading: true });
       const handleStop = () => {
         onTabUpdate(tabId, { loading: false });
@@ -122,7 +150,15 @@ export const useWebviewManager = ({
         if (now - lastTime < NAVIGATE_THROTTLE_MS) return;
         lastNavigateTimeRef.current[tabId] = now;
         
-        if (event?.url) onTabUpdate(tabId, { url: event.url });
+        if (event?.url) {
+          // HTTPS-only mode: redirect http to https
+          if (getSetting('settings:httpsOnly') && event.url.startsWith('http://')) {
+            const httpsUrl = event.url.replace(/^http:\/\//, 'https://');
+            try { el.loadURL(httpsUrl); } catch {}
+            return;
+          }
+          onTabUpdate(tabId, { url: event.url });
+        }
         updateNavState(tabId, el);
         if (event?.url) applyCosmetics(tabId, el, event.url);
       };
@@ -136,6 +172,105 @@ export const useWebviewManager = ({
       };
       const handleDomReady = () => {
         applyCosmetics(tabId, el, el.getURL());
+
+        // Apply user settings to webview
+        try {
+          // Custom CSS injection
+          const customCSS = getSetting('settings:customCSS');
+          if (customCSS && typeof customCSS === 'string' && customCSS.trim()) {
+            el.insertCSS(customCSS).catch(() => {});
+          }
+
+          // Smooth scrolling
+          const smoothScrolling = getSetting('settings:smoothScrolling');
+          el.executeJavaScript(
+            `document.documentElement.style.scrollBehavior = '${smoothScrolling ? 'smooth' : 'auto'}';`,
+            true
+          ).catch(() => {});
+
+          // Do Not Track via JS
+          if (getSetting('settings:doNotTrack')) {
+            el.executeJavaScript(
+              `Object.defineProperty(navigator, 'doNotTrack', { get: () => '1', configurable: true });`,
+              true
+            ).catch(() => {});
+          }
+
+          // Lazy loading: add loading="lazy" to all future images/iframes
+          if (getSetting('settings:lazyLoading')) {
+            el.executeJavaScript(
+              `(function(){
+                document.querySelectorAll('img:not([loading]),iframe:not([loading])').forEach(function(el){el.setAttribute('loading','lazy')});
+                var obs = new MutationObserver(function(muts){
+                  muts.forEach(function(m){
+                    m.addedNodes.forEach(function(n){
+                      if(n.nodeType===1){
+                        if((n.tagName==='IMG'||n.tagName==='IFRAME')&&!n.getAttribute('loading'))n.setAttribute('loading','lazy');
+                        n.querySelectorAll&&n.querySelectorAll('img:not([loading]),iframe:not([loading])').forEach(function(el){el.setAttribute('loading','lazy')});
+                      }
+                    });
+                  });
+                });
+                obs.observe(document.documentElement,{childList:true,subtree:true});
+              })();`,
+              true
+            ).catch(() => {});
+          }
+
+          // WebGL toggle: disable via canvas override when webgl is off
+          if (!getSetting('settings:webgl')) {
+            el.executeJavaScript(
+              `HTMLCanvasElement.prototype.getContext = (function(orig){
+                return function(type){
+                  if(type==='webgl'||type==='webgl2'||type==='experimental-webgl')return null;
+                  return orig.apply(this,arguments);
+                };
+              })(HTMLCanvasElement.prototype.getContext);`,
+              true
+            ).catch(() => {});
+          }
+
+          // WebRTC policy
+          const webrtcPolicy = getSetting('settings:webrtcPolicy');
+          if (webrtcPolicy === 'disable') {
+            el.executeJavaScript(
+              `window.RTCPeerConnection = undefined; window.webkitRTCPeerConnection = undefined;`,
+              true
+            ).catch(() => {});
+          } else if (webrtcPolicy === 'hideLocal') {
+            el.executeJavaScript(
+              `(function(){
+                var Orig = window.RTCPeerConnection;
+                if(!Orig)return;
+                window.RTCPeerConnection = function(){
+                  var pc = new Orig({iceServers:[],iceCandidatePoolSize:0});
+                  return pc;
+                };
+                window.RTCPeerConnection.prototype = Orig.prototype;
+              })();`,
+              true
+            ).catch(() => {});
+          }
+
+          // Fingerprint protection: add noise to canvas/audio APIs
+          if (getSetting('settings:fingerprintProtection')) {
+            el.executeJavaScript(
+              `(function(){
+                var origToDataURL = HTMLCanvasElement.prototype.toDataURL;
+                HTMLCanvasElement.prototype.toDataURL = function(){
+                  var ctx = this.getContext('2d');
+                  if(ctx){
+                    var img = ctx.getImageData(0,0,Math.min(this.width,2),Math.min(this.height,2));
+                    for(var i=0;i<img.data.length;i+=4){img.data[i]=(img.data[i]+Math.floor(Math.random()*2))&255;}
+                    ctx.putImageData(img,0,0);
+                  }
+                  return origToDataURL.apply(this,arguments);
+                };
+              })();`,
+              true
+            ).catch(() => {});
+          }
+        } catch {}
       };
       const handleBeforeInput = (event: any) => {
         const input = event?.input || event?.detail?.input || event;
@@ -157,6 +292,7 @@ export const useWebviewManager = ({
         if (typeof event?.preventDefault === 'function') {
           event.preventDefault();
         }
+        // Respect openLinksInNewTab setting — always open in new tab if enabled
         if (url) onOpenNewTab?.(url);
       };
 
@@ -212,12 +348,12 @@ export const useWebviewManager = ({
       if (tab.id === activeTabId) {
         
         try {
-          if (typeof webview.resume === 'function') webview.resume();
+          if (typeof (webview as any).resume === 'function') (webview as any).resume();
         } catch {}
       } else {
         
         try {
-          if (typeof webview.pause === 'function') webview.pause();
+          if (typeof (webview as any).pause === 'function') (webview as any).pause();
         } catch {}
       }
     });

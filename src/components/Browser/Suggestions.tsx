@@ -62,6 +62,8 @@ interface SuggestionsBarProps {
   historyItems?: Array<{ url: string; title: string; timestamp: number }>;
   historySorted: Array<{ url: string; title: string; timestamp: number }>;
   topSites: TopSiteSuggestion[];
+  searchSuggestionsEnabled?: boolean;
+  searchHistoryEnabled?: boolean;
 }
 
 const SuggestionsBarInternal: React.FC<SuggestionsBarProps> = ({
@@ -70,7 +72,9 @@ const SuggestionsBarInternal: React.FC<SuggestionsBarProps> = ({
   isOpen,
   historyItems = [],
   historySorted,
-  topSites
+  topSites,
+  searchSuggestionsEnabled = true,
+  searchHistoryEnabled = true
 }) => {
   const [query, setQuery] = useState('');
   const [remoteSuggestions, setRemoteSuggestions] = useState<string[]>([]);
@@ -94,6 +98,7 @@ const SuggestionsBarInternal: React.FC<SuggestionsBarProps> = ({
     const trimmed = query.trim();
     if (
       !isOpen ||
+      !searchSuggestionsEnabled ||
       trimmed.length < REMOTE_QUERY_MIN ||
       searchEngine !== SearchEngine.DUCKDUCKGO ||
       isLikelyUrl(trimmed)
@@ -223,26 +228,28 @@ const SuggestionsBarInternal: React.FC<SuggestionsBarProps> = ({
       ? historyItems
       : historySorted;
 
-    const historyMatches = historySource
-      .filter((item) => !item.url.startsWith('browser://'))
-      .filter((item) => {
-        if (!trimmed) return true;
-        return (
-          item.title.toLowerCase().includes(lower) || item.url.toLowerCase().includes(lower)
-        );
-      })
-      .slice(0, trimmed ? 4 : 3)
-      .map((item, index) => ({
-        id: `history-${index}-${item.url}`,
-        label: item.title || item.url,
-        value: item.url,
-        description: item.url.replace(/^https?:\/\//, ''),
-        hint: 'History',
-        icon: <LuRotateCcw size={14} />,
-        type: 'url' as const
-      }));
+    if (searchHistoryEnabled) {
+      const historyMatches = historySource
+        .filter((item) => !item.url.startsWith('browser://'))
+        .filter((item) => {
+          if (!trimmed) return true;
+          return (
+            item.title.toLowerCase().includes(lower) || item.url.toLowerCase().includes(lower)
+          );
+        })
+        .slice(0, trimmed ? 4 : 3)
+        .map((item, index) => ({
+          id: `history-${index}-${item.url}`,
+          label: item.title || item.url,
+          value: item.url,
+          description: item.url.replace(/^https?:\/\//, ''),
+          hint: 'History',
+          icon: <LuRotateCcw size={14} />,
+          type: 'url' as const
+        }));
 
-    items.push(...historyMatches);
+      items.push(...historyMatches);
+    }
 
     if (trimmed) {
       remoteSuggestions.forEach((suggestion, index) => {
@@ -263,7 +270,7 @@ const SuggestionsBarInternal: React.FC<SuggestionsBarProps> = ({
       if (!deduped.has(key)) deduped.set(key, item);
     });
     return Array.from(deduped.values()).slice(0, MAX_SUGGESTIONS);
-  }, [query, remoteSuggestions, searchEngine, tabs, historyItems, historySorted, topSites]);
+  }, [query, remoteSuggestions, searchEngine, tabs, historyItems, historySorted, topSites, searchHistoryEnabled]);
 
   useEffect(() => {
     suggestionsRef.current = suggestions;

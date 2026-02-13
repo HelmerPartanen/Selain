@@ -63,8 +63,8 @@ export const SettingsPage = memo(({
   const info = sectionTitles[activeSection];
 
   return (
-    <div className="h-full w-full overflow-hidden">
-      <div className="h-full w-full flex flex-col">
+    <div className="h-full w-full overflow-hidden p-2">
+      <div className="h-full w-full flex flex-col rounded-2xl bg-[color:var(--ui-surface)] backdrop-blur-lg border border-[color:var(--ui-border)]">
         {/* Header */}
         <div className="shrink-0 px-8 pt-6 pb-4">
           <div className="max-w-3xl mx-auto w-full transition-all duration-200 ease-out">

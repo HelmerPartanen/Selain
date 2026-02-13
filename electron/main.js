@@ -325,6 +325,16 @@ const createWindow = async () => {
   mainWindow.webContents.setUserAgent(
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
   );
+
+  // Register ready-to-show BEFORE loading content to avoid race condition
+  mainWindow.once('ready-to-show', () => {
+    if (shouldFullscreen) {
+      mainWindow.setFullScreen(true);
+    } else if (shouldMaximize) {
+      mainWindow.maximize();
+    }
+    mainWindow.show();
+  });
   
   const distPath = app.isPackaged
     ? path.join(app.getAppPath(), 'dist', 'index.html')
@@ -345,15 +355,6 @@ const createWindow = async () => {
       throw err;
     }
   }
-
-  mainWindow.once('ready-to-show', () => {
-    if (shouldFullscreen) {
-      mainWindow.setFullScreen(true);
-    } else if (shouldMaximize) {
-      mainWindow.maximize();
-    }
-    mainWindow.show();
-  });
 
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });

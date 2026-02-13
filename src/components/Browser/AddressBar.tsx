@@ -239,21 +239,21 @@ const AddressBarInner: React.FC<AddressBarProps> = ({
     [inputSize]
   );
 
-  const containerClassName = useMemo(() => 
-    `relative flex items-center w-full h-8 overflow-hidden transition-colors duration-200 backdrop-blur-lg ${
-      isFocused
-        ? "bg-[color:var(--ui-surface-strong)] shadow-sm border border-[color:var(--ui-border)]"
-        : "bg-[color:var(--ui-surface-muted)] shadow-sm hover:bg-[color:var(--ui-surface-muted)] border border-[color:var(--ui-border)]"
-    } rounded-full`,
-    [isFocused]
-  );
-
   const wrapperClassName = useMemo(() =>
     `relative flex justify-center transition-[width,transform] duration-200 ease-in-out ${
       isFocused
-        ? "w-full max-w-5xl scale-100 drop-shadow-md"
+        ? "w-full max-w-5xl scale-100"
         : "max-w-full scale-100"
     }`,
+    [isFocused]
+  );
+
+  const containerClassName = useMemo(() => 
+    `relative flex items-center w-full h-8 overflow-hidden transition-colors duration-200 backdrop-blur-lg ${
+      isFocused
+        ? "bg-[color:var(--ui-surface-strong)] border border-[color:var(--ui-border)] shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+        : "bg-[color:var(--ui-surface-muted)] shadow-sm hover:bg-[color:var(--ui-surface-muted)] border border-[color:var(--ui-border)]"
+    } rounded-full`,
     [isFocused]
   );
 

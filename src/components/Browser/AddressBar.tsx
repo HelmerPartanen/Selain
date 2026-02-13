@@ -249,10 +249,10 @@ const AddressBarInner: React.FC<AddressBarProps> = ({
   );
 
   const containerClassName = useMemo(() => 
-    `relative flex items-center w-full h-8 overflow-hidden transition-colors duration-200 backdrop-blur-lg ${
+    `relative flex items-center w-full h-8 overflow-hidden transition-colors duration-200 ${
       isFocused
-        ? "bg-[color:var(--ui-surface-strong)] border border-[color:var(--ui-border)] shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
-        : "bg-[color:var(--ui-surface-muted)] shadow-sm hover:bg-[color:var(--ui-surface-muted)] border border-[color:var(--ui-border)]"
+        ? "bg-[color:var(--ui-surface-solid)] border border-[color:var(--ui-border)] shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+        : "bg-[color:var(--ui-surface-strong)] hover:bg-[color:var(--ui-surface-solid)] shadow-sm border border-[color:var(--ui-border)]"
     } rounded-full`,
     [isFocused]
   );

@@ -88,6 +88,7 @@ export const useSettings = (defaultSettings: AppSettings): UseSettingsResult => 
       '--ui-wallpaper-overlay',
       '--ui-base',
       '--ui-surface',
+      '--ui-surface-solid',
       '--ui-surface-strong',
       '--ui-surface-muted',
       '--ui-surface-subtle',
@@ -146,6 +147,7 @@ export const useSettings = (defaultSettings: AppSettings): UseSettingsResult => 
 
       root.style.setProperty('--ui-base', makeRgba(base, 1));
       root.style.setProperty('--ui-surface', makeRgba(surfaceTint, isDark ? 0.72 : 0.68));
+      root.style.setProperty('--ui-surface-solid', makeRgba(surfaceTint, 1));
       root.style.setProperty('--ui-surface-strong', makeRgba(surfaceTint, isDark ? 0.82 : 0.78));
       root.style.setProperty('--ui-surface-muted', makeRgba(surfaceTint, isDark ? 0.58 : 0.52));
       root.style.setProperty('--ui-surface-subtle', makeRgba(surfaceTint, isDark ? 0.35 : 0.3));
@@ -225,6 +227,7 @@ export const useSettings = (defaultSettings: AppSettings): UseSettingsResult => 
       root.style.setProperty('--ui-wallpaper-overlay', 'rgba(0, 0, 0, 0.35)');
       root.style.setProperty('--ui-base', '#181716');
       root.style.setProperty('--ui-surface', 'rgba(30, 29, 27, 0.82)');
+      root.style.setProperty('--ui-surface-solid', 'rgba(30, 29, 27, 1)');
       root.style.setProperty('--ui-surface-strong', 'rgba(36, 35, 33, 0.88)');
       root.style.setProperty('--ui-surface-muted', 'rgba(36, 35, 33, 0.72)');
       root.style.setProperty('--ui-surface-subtle', 'rgba(42, 41, 38, 0.55)');

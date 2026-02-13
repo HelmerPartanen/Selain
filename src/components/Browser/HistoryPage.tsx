@@ -23,7 +23,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ items = [], onClear })
 
   return (
     <div className="h-full w-full overflow-hidden p-2">
-      <div className="h-full flex flex-col rounded-2xl bg-[color:var(--ui-surface)] backdrop-blur-lg border border-[color:var(--ui-border)]">
+      <div className="h-full flex flex-col rounded-2xl bg-[color:var(--ui-surface-solid)] border border-[color:var(--ui-border)]">
         {/* Header */}
         <div className="shrink-0 px-8 pt-6 pb-4">
           <div className="flex items-center justify-between">
@@ -39,7 +39,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ items = [], onClear })
               <button
                 type="button"
                 onClick={onClear}
-                className="text-xs font-medium px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-all duration-150 active:scale-[0.97]"
+                className="text-xs font-medium px-3 py-1.5 rounded-lg text-red-500 bg-red-500/20 hover:bg-red-500/30 transition-all duration-150 active:scale-[0.97]"
               >
                 Clear all
               </button>

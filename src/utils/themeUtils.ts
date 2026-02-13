@@ -59,6 +59,7 @@ export const applyTheme = (
 
   cssVars['--ui-base'] = makeRgba(base, 1);
   cssVars['--ui-surface'] = makeRgba(surfaceTint, isDark ? 0.72 : 0.68);
+  cssVars['--ui-surface-solid'] = makeRgba(surfaceTint, 1);
   cssVars['--ui-surface-strong'] = makeRgba(surfaceTint, isDark ? 0.82 : 0.78);
   cssVars['--ui-surface-muted'] = makeRgba(surfaceTint, isDark ? 0.58 : 0.52);
   cssVars['--ui-surface-subtle'] = makeRgba(surfaceTint, isDark ? 0.48 : 0.42);

@@ -267,7 +267,7 @@ export const AdvancedSettingsSection: React.FC = () => {
               </div>
             </div>
             <div className="text-xs text-[color:var(--ui-text-subtle)] px-2 py-1 rounded-lg bg-[color:var(--ui-hover)]">
-              v0.1.0
+              v0.1.2
             </div>
           </div>
         </div>

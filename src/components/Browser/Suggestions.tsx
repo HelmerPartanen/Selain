@@ -323,7 +323,7 @@ const SuggestionsBarInternal: React.FC<SuggestionsBarProps> = ({
 
   return (
   <div className="pointer-events-auto w-full">
-    <div className="w-full rounded-3xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface-strong)] shadow-lg overflow-hidden backdrop-blur-xl">
+    <div className="w-full rounded-3xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface-solid)] shadow-lg overflow-hidden">
       <div className="flex flex-col py-0 px-0">
         {suggestions.map((item, index) => {
           const isActive = index === selectedIndex;

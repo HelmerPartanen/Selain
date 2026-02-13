@@ -35,7 +35,7 @@ const fontSizeOptions = [
 
 export const GeneralSettingsSection: React.FC = () => {
   const [startupPage, setStartupPage] = useState<'newTab' | 'lastSession'>(() =>
-    (localStorage.getItem(STARTUP_PAGE_KEY) as 'newTab' | 'lastSession') || 'newTab'
+    storageGet(STARTUP_PAGE_KEY, 'newTab')
   );
   const [restoreTabs, setRestoreTabs] = useState(() => storageGet(RESTORE_TABS_KEY, false));
   const [smoothScrolling, setSmoothScrolling] = useState(() => storageGet(SMOOTH_SCROLLING_KEY, true));
@@ -48,10 +48,10 @@ export const GeneralSettingsSection: React.FC = () => {
   const [fontSize, setFontSize] = useState(() => storageGet(FONT_SIZE_KEY, 'medium'));
   const [doubleClickTabClose, setDoubleClickTabClose] = useState(() => storageGet(DOUBLE_CLICK_TAB_KEY, false));
   const [newTabPosition, setNewTabPosition] = useState<'end' | 'afterCurrent'>(() =>
-    (localStorage.getItem(NEW_TAB_POSITION_KEY) as 'end' | 'afterCurrent') || 'end'
+    storageGet(NEW_TAB_POSITION_KEY, 'end')
   );
   const [sidebarPosition, setSidebarPosition] = useState<'left' | 'right'>(() =>
-    (localStorage.getItem(SIDEBAR_POSITION_KEY) as 'left' | 'right') || 'left'
+    storageGet(SIDEBAR_POSITION_KEY, 'left')
   );
   const [middleClickPaste, setMiddleClickPaste] = useState(() => storageGet(MIDDLE_CLICK_PASTE_KEY, false));
 

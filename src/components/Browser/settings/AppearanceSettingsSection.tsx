@@ -56,21 +56,21 @@ export const AppearanceSettingsSection: React.FC<
   }, []);
 
   const [uiDensity, setUiDensity] = useState<'compact' | 'comfortable' | 'spacious'>(() =>
-    (localStorage.getItem(UI_DENSITY_KEY) as any) || 'comfortable'
+    storageGet(UI_DENSITY_KEY, 'comfortable')
   );
   const [animationSpeed, setAnimationSpeed] = useState<'none' | 'fast' | 'normal' | 'slow'>(() =>
-    (localStorage.getItem(ANIMATION_SPEED_KEY) as any) || 'normal'
+    storageGet(ANIMATION_SPEED_KEY, 'normal')
   );
   const [showClock, setShowClock] = useState(() => storageGet(SHOW_CLOCK_KEY, true));
   const [clockFormat, setClockFormat] = useState<'12h' | '24h'>(() =>
-    (localStorage.getItem(CLOCK_FORMAT_KEY) as any) || '24h'
+    storageGet(CLOCK_FORMAT_KEY, '24h')
   );
   const [showWeather, setShowWeather] = useState(() => storageGet(SHOW_WEATHER_KEY, true));
   const [showGreeting, setShowGreeting] = useState(() => storageGet(SHOW_GREETING_KEY, true));
   const [toolbarTransparency, setToolbarTransparency] = useState(() => storageGet(TOOLBAR_TRANSPARENCY_KEY, true));
   const [roundedCorners, setRoundedCorners] = useState(() => storageGet(ROUNDED_CORNERS_KEY, true));
   const [tabStyle, setTabStyle] = useState<'pill' | 'underline' | 'block'>(() =>
-    (localStorage.getItem(TAB_STYLE_KEY) as any) || 'pill'
+    storageGet(TAB_STYLE_KEY, 'pill')
   );
 
   return (
@@ -247,7 +247,7 @@ export const AppearanceSettingsSection: React.FC<
               ]).map(opt => (
                 <button
                   key={opt.id}
-                  onClick={() => { setTabStyle(opt.id); localStorage.setItem(TAB_STYLE_KEY, opt.id); }}
+                  onClick={() => { setTabStyle(opt.id); persist(TAB_STYLE_KEY, opt.id); }}
                   className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150
                     ${tabStyle === opt.id
                       ? 'bg-[color:var(--ui-accent)] text-[color:var(--ui-accent-contrast)] shadow-sm'
@@ -270,7 +270,7 @@ export const AppearanceSettingsSection: React.FC<
               ]).map(opt => (
                 <button
                   key={opt.id}
-                  onClick={() => { setUiDensity(opt.id); localStorage.setItem(UI_DENSITY_KEY, opt.id); }}
+                  onClick={() => { setUiDensity(opt.id); persist(UI_DENSITY_KEY, opt.id); }}
                   className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150
                     ${uiDensity === opt.id
                       ? 'bg-[color:var(--ui-accent)] text-[color:var(--ui-accent-contrast)] shadow-sm'
@@ -305,7 +305,7 @@ export const AppearanceSettingsSection: React.FC<
                 ]).map(opt => (
                   <button
                     key={opt.id}
-                    onClick={() => { setClockFormat(opt.id); localStorage.setItem(CLOCK_FORMAT_KEY, opt.id); }}
+                    onClick={() => { setClockFormat(opt.id); persist(CLOCK_FORMAT_KEY, opt.id); }}
                     className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150
                       ${clockFormat === opt.id
                         ? 'bg-[color:var(--ui-accent)] text-[color:var(--ui-accent-contrast)] shadow-sm'
@@ -347,7 +347,7 @@ export const AppearanceSettingsSection: React.FC<
             ]).map(opt => (
               <button
                 key={opt.id}
-                onClick={() => { setAnimationSpeed(opt.id); localStorage.setItem(ANIMATION_SPEED_KEY, opt.id); }}
+                onClick={() => { setAnimationSpeed(opt.id); persist(ANIMATION_SPEED_KEY, opt.id); }}
                 className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all duration-150
                   ${animationSpeed === opt.id
                     ? 'bg-[color:var(--ui-accent)] text-[color:var(--ui-accent-contrast)] shadow-sm'

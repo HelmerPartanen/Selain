@@ -25,14 +25,6 @@ const storageGet = (key: string, fallback: any) => {
   }
 };
 
-const storageGetString = (key: string, fallback: string) => {
-  try {
-    return localStorage.getItem(key) ?? fallback;
-  } catch {
-    return fallback;
-  }
-};
-
 export const AdvancedSettingsSection: React.FC = () => {
   const [devPanel, setDevPanel] = useState(() => storageGet(DEV_PANEL_KEY, false));
   const [hwAccel, setHwAccel] = useState(() => storageGet(HARDWARE_ACCEL_KEY, true));
@@ -41,15 +33,15 @@ export const AdvancedSettingsSection: React.FC = () => {
   const [preloadPages, setPreloadPages] = useState(() => storageGet(PRELOAD_PAGES_KEY, false));
   const [verboseLogging, setVerboseLogging] = useState(() => storageGet(VERBOSE_LOGGING_KEY, false));
   const [experimentalFeatures, setExperimentalFeatures] = useState(() => storageGet(EXPERIMENTAL_FEATURES_KEY, false));
-  const [customCSS, setCustomCSS] = useState(() => storageGetString(CUSTOM_CSS_KEY, ''));
-  const [customUserAgent, setCustomUserAgent] = useState(() => storageGetString(CUSTOM_USERAGENT_KEY, ''));
+  const [customCSS, setCustomCSS] = useState(() => storageGet(CUSTOM_CSS_KEY, ''));
+  const [customUserAgent, setCustomUserAgent] = useState(() => storageGet(CUSTOM_USERAGENT_KEY, ''));
   const [reduceMotion, setReduceMotion] = useState(() => storageGet(REDUCE_MOTION_KEY, false));
   const [webgl, setWebgl] = useState(() => storageGet(WEBGL_KEY, true));
   const [webrtcPolicy, setWebrtcPolicy] = useState<'default' | 'disable_non_proxied' | 'disable'>(() =>
-    (localStorage.getItem(WEBRTC_POLICY_KEY) as any) || 'default'
+    storageGet(WEBRTC_POLICY_KEY, 'default')
   );
   const [processModel, setProcessModel] = useState<'site' | 'process'>(() =>
-    (localStorage.getItem(PROCESS_MODEL_KEY) as any) || 'site'
+    storageGet(PROCESS_MODEL_KEY, 'site')
   );
   const [clearing, setClearing] = useState(false);
   const [cleared, setCleared] = useState(false);
@@ -58,10 +50,6 @@ export const AdvancedSettingsSection: React.FC = () => {
 
   const persist = useCallback((key: string, value: any) => {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
-  }, []);
-
-  const persistString = useCallback((key: string, value: string) => {
-    try { localStorage.setItem(key, value); } catch {}
   }, []);
 
   const handleClearBrowsingData = useCallback(async () => {
@@ -143,7 +131,7 @@ export const AdvancedSettingsSection: React.FC = () => {
               ]).map(opt => (
                 <button
                   key={opt.id}
-                  onClick={() => { setWebrtcPolicy(opt.id); localStorage.setItem(WEBRTC_POLICY_KEY, opt.id); }}
+                  onClick={() => { setWebrtcPolicy(opt.id); persist(WEBRTC_POLICY_KEY, opt.id); }}
                   className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all duration-150
                     ${webrtcPolicy === opt.id
                       ? 'bg-[color:var(--ui-accent)] text-[color:var(--ui-accent-contrast)] shadow-sm'
@@ -189,7 +177,7 @@ export const AdvancedSettingsSection: React.FC = () => {
               ]).map(opt => (
                 <button
                   key={opt.id}
-                  onClick={() => { setProcessModel(opt.id); localStorage.setItem(PROCESS_MODEL_KEY, opt.id); }}
+                  onClick={() => { setProcessModel(opt.id); persist(PROCESS_MODEL_KEY, opt.id); }}
                   className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150
                     ${processModel === opt.id
                       ? 'bg-[color:var(--ui-accent)] text-[color:var(--ui-accent-contrast)] shadow-sm'
@@ -216,7 +204,7 @@ export const AdvancedSettingsSection: React.FC = () => {
           />
           <button
             onClick={() => {
-              persistString(CUSTOM_CSS_KEY, customCSS);
+              persist(CUSTOM_CSS_KEY, customCSS);
               setCssSaved(true);
               setTimeout(() => setCssSaved(false), 1500);
             }}
@@ -239,7 +227,7 @@ export const AdvancedSettingsSection: React.FC = () => {
           />
           <button
             onClick={() => {
-              persistString(CUSTOM_USERAGENT_KEY, customUserAgent);
+              persist(CUSTOM_USERAGENT_KEY, customUserAgent);
               setUaSaved(true);
               setTimeout(() => setUaSaved(false), 1500);
             }}

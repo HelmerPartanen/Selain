@@ -505,9 +505,13 @@ app.whenReady().then(async () => {
       
       mainWindow.webContents.on('console-message', (level, message) => {
         const msgStr = typeof message === 'string' ? message : String(message ?? '');
+        // Suppress common non-critical warnings
         if (msgStr.includes('Autofill.enable') || 
             msgStr.includes('Autofill.setAddresses') ||
-            msgStr.includes("wasn't found")) {
+            msgStr.includes("wasn't found") ||
+            msgStr.includes('ERR_ABORTED') ||
+            msgStr.includes('GUEST_VIEW_MANAGER_CALL') ||
+            msgStr.includes('Error: Error invoking remote method')) {
           return;
         }
         if (level === 3) {

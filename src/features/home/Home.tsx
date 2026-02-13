@@ -108,12 +108,22 @@ const Home: React.FC = () => {
     if (historyItems.length <= 1) return historyItems;
     return [...historyItems].sort((a, b) => b.timestamp - a.timestamp);
   }, [historyItems]);
+  
+  // Optimize topSites calculation with better memoization key
+  const historyKey = useMemo(() => historyItems.length, [historyItems.length]);
   const topSites = useMemo(() => {
+    // Only recalculate when history length changes significantly
+    if (historyItems.length === 0) return [];
+    
     const byHost = new Map<
       string,
       { url: string; title: string; count: number; lastVisited: number }
     >();
-    historyItems.forEach((item) => {
+    
+    // Process only recent history items for better performance
+    const recentItems = historyItems.slice(0, Math.min(100, historyItems.length));
+    
+    recentItems.forEach((item) => {
       if (!item.url || item.url.startsWith('browser://')) return;
       let hostname = '';
       try {
@@ -151,7 +161,7 @@ const Home: React.FC = () => {
         hint: 'Top site' as const,
         type: 'top' as const
       }));
-  }, [historyItems]);
+  }, [historyKey, historyItems]);
   const canGoBack = Boolean(
     activeTab?.canGoBack ||
       (activeTab

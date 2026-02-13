@@ -24,16 +24,53 @@ export default defineConfig(({ mode }) => {
         minify: 'esbuild',
         sourcemap: false,
         cssCodeSplit: true,
+        target: 'esnext',
+        cssMinify: 'esbuild',
+        reportCompressedSize: false,
+        chunkSizeWarningLimit: 1000,
         rollupOptions: {
           output: {
-            manualChunks: {
-              'weather-widget': ['src/components/Browser/widgets/WeatherWidget.tsx'],
-              'notes-widget': ['src/components/Browser/widgets/NotesWidget.tsx'],
-              'settings': ['src/components/Browser/SettingsPage.tsx'],
-              'dev-panel': ['src/components/Browser/DeveloperPanel.tsx']
-            }
+            manualChunks: (id) => {
+              // Optimize chunk splitting for better caching
+              if (id.includes('node_modules')) {
+                if (id.includes('react') || id.includes('react-dom')) {
+                  return 'vendor-react';
+                }
+                if (id.includes('react-icons')) {
+                  return 'vendor-icons';
+                }
+                return 'vendor';
+              }
+              if (id.includes('/sky/')) {
+                return 'sky-system';
+              }
+              if (id.includes('widgets')) {
+                return 'widgets';
+              }
+              if (id.includes('SettingsPage')) {
+                return 'settings';
+              }
+            },
+            assetFileNames: 'assets/[name]-[hash][extname]',
+            chunkFileNames: 'js/[name]-[hash].js',
+            entryFileNames: 'js/[name]-[hash].js'
+          },
+          treeshake: {
+            moduleSideEffects: false,
+            propertyReadSideEffects: false,
+            tryCatchDeoptimization: false
           }
-        }
+        },
+        assetsInlineLimit: 4096,
+      },
+      esbuild: {
+        drop: mode === 'production' ? ['console', 'debugger'] : [],
+        legalComments: 'none',
+        treeShaking: true
+      },
+      optimizeDeps: {
+        include: ['react', 'react-dom'],
+        exclude: []
       }
     };
 });

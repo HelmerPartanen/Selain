@@ -7,11 +7,19 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
-
-app.commandLine.appendSwitch('renderer-process-limit', '6');
+// Performance optimizations
+app.commandLine.appendSwitch('renderer-process-limit', '8');
 app.commandLine.appendSwitch('enable-v8-code-caching');
 app.commandLine.appendSwitch('enable-preconnect');
+app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiIgnoreDriverChecks');
+app.commandLine.appendSwitch('disable-features', 'UseChromeOSDirectVideoDecoder');
+app.commandLine.appendSwitch('autoplay-policy', 'user-gesture-required');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('enable-parallel-downloading');
+app.commandLine.appendSwitch('enable-quic');
+app.commandLine.appendSwitch('network-quality-estimator-set-max-quality', 'Slow-2G');
 
 const isDev = !app.isPackaged;
 
@@ -36,6 +44,42 @@ let adblockInitializing = false;
 let adblockStats = { blocked: 0 };
 const HISTORY_LIMIT = 300;
 const pendingPermissions = new Map();
+
+// LRU Cache for adblock results
+class LRUCache {
+  constructor(capacity = 1000) {
+    this.capacity = capacity;
+    this.cache = new Map();
+  }
+  
+  get(key) {
+    if (!this.cache.has(key)) return undefined;
+    const value = this.cache.get(key);
+    this.cache.delete(key);
+    this.cache.set(key, value);
+    return value;
+  }
+  
+  set(key, value) {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    } else if (this.cache.size >= this.capacity) {
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+    }
+    this.cache.set(key, value);
+  }
+  
+  clear() {
+    this.cache.clear();
+  }
+}
+
+const adblockCache = new LRUCache(2000);
+
+// Batch history writes
+let historyWriteTimer = null;
+let pendingHistoryData = null;
 
 
 const log = (message, error = null) => {
@@ -62,8 +106,22 @@ const readHistory = async () => {
 };
 
 const writeHistory = async (items) => {
-  const payload = JSON.stringify(items, null, 2);
+  const payload = JSON.stringify(items);
   await fs.writeFile(getHistoryPath(), payload, 'utf-8');
+};
+
+const writeHistoryDebounced = (items) => {
+  pendingHistoryData = items;
+  if (historyWriteTimer) {
+    clearTimeout(historyWriteTimer);
+  }
+  historyWriteTimer = setTimeout(() => {
+    if (pendingHistoryData) {
+      writeHistory(pendingHistoryData).catch(console.error);
+      pendingHistoryData = null;
+    }
+    historyWriteTimer = null;
+  }, 1000);
 };
 
 const readWindowState = async () => {
@@ -146,39 +204,36 @@ const attachAdblocker = () => {
   adblockAttached = true;
   
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
-    if (!adBlockEnabled) {
+    if (!adBlockEnabled || !adblockEngine) {
       callback({});
       return;
     }
 
+    // Check cache first
+    const cacheKey = `${details.url}|${details.resourceType}`;
+    let shouldBlock = adblockCache.get(cacheKey);
     
-    
-    if (!adblockEngine && !adblockInitializing) {
-      adblockInitializing = true;
-      initAdblocker().catch((err) => {
-        console.error('Adblock init failed:', err);
-        adblockInitializing = false;
+    if (shouldBlock === undefined) {
+      const type = mapResourceType(details.resourceType);
+      const sourceUrl = details.referrer || details.initiator || undefined;
+      const request = Request.fromRawDetails({
+        url: details.url,
+        type,
+        sourceUrl
       });
+      const { match } = adblockEngine.match(request);
+      shouldBlock = Boolean(match);
+      adblockCache.set(cacheKey, shouldBlock);
     }
-
-    if (!adblockEngine) {
-      callback({});
-      return;
-    }
-
-    const type = mapResourceType(details.resourceType);
-    const sourceUrl = details.referrer || details.initiator || undefined;
-    const request = Request.fromRawDetails({
-      url: details.url,
-      type,
-      sourceUrl
-    });
-    const { match } = adblockEngine.match(request);
-    if (match) {
+    
+    if (shouldBlock) {
       adblockStats.blocked += 1;
-      mainWindow?.webContents.send('adblock:stats', { blocked: adblockStats.blocked });
+      // Debounce stats update
+      if (adblockStats.blocked % 10 === 0) {
+        mainWindow?.webContents.send('adblock:stats', { blocked: adblockStats.blocked });
+      }
     }
-    callback({ cancel: Boolean(match) });
+    callback({ cancel: shouldBlock });
   });
 };
 
@@ -384,7 +439,7 @@ const registerIpc = () => {
     const deduped = history.filter((item) => item?.url !== url);
     deduped.unshift(nextEntry);
     const trimmed = deduped.slice(0, HISTORY_LIMIT);
-    await writeHistory(trimmed);
+    writeHistoryDebounced(trimmed);
     return trimmed;
   });
 
@@ -421,6 +476,12 @@ process.on('unhandledRejection', (reason) => {
 app.whenReady().then(async () => {
   log('App ready, initializing...');
   registerIpc();
+  
+  // Pre-initialize adblock in parallel
+  initAdblocker().catch((err) => {
+    console.error('Failed to pre-initialize adblocker:', err);
+  });
+  
   try {
     await createWindow();
     

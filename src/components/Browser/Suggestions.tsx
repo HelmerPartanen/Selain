@@ -64,7 +64,7 @@ interface SuggestionsBarProps {
   topSites: TopSiteSuggestion[];
 }
 
-export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
+const SuggestionsBarInternal: React.FC<SuggestionsBarProps> = ({
   tabs,
   searchEngine,
   isOpen,
@@ -382,4 +382,7 @@ export const SuggestionsBar: React.FC<SuggestionsBarProps> = ({
       </div>
     </div>
   </div>
-);};
+);
+}
+
+export const SuggestionsBar = React.memo(SuggestionsBarInternal);

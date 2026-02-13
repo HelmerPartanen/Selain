@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { LuMinus, LuSquare, LuX } from 'react-icons/lu';
 
-export const WindowControls: React.FC = () => {
+const WindowControlsInner: React.FC = () => {
   const [isMaximized, setIsMaximized] = useState(false);
   const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
 
@@ -71,3 +71,5 @@ export const WindowControls: React.FC = () => {
     </div>
   );
 };
+
+export const WindowControls = memo(WindowControlsInner);

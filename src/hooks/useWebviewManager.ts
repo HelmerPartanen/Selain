@@ -22,7 +22,9 @@ export const useWebviewManager = ({
   const cosmeticsCssKeyRef = useRef<Record<string, string[]>>({});
   const lastHistoryKeyRef = useRef<Record<string, string>>({});
   const lastNavigateTimeRef = useRef<Record<string, number>>({});
-  const NAVIGATE_THROTTLE_MS = 300;
+  const NAVIGATE_THROTTLE_MS = 500;
+  const cosmeticsCache = useRef<Map<string, { styles: string[], scripts: string[] }>>(new Map());
+  const COSMETICS_CACHE_MAX = 50;
 
   const updateNavState = useCallback(
     (tabId: string, webview: WebviewTag | null) => {
@@ -54,8 +56,19 @@ export const useWebviewManager = ({
       }
       cosmeticsCssKeyRef.current[tabId] = [];
       cosmeticsUrlRef.current[tabId] = url;
+      
       try {
-        const { styles, scripts } = await window.electronAPI.getAdblockCosmetics(url);
+        let cosmetics = cosmeticsCache.current.get(url);
+        if (!cosmetics) {
+          cosmetics = await window.electronAPI.getAdblockCosmetics(url);
+          if (cosmeticsCache.current.size >= COSMETICS_CACHE_MAX) {
+            const firstKey = cosmeticsCache.current.keys().next().value;
+            cosmeticsCache.current.delete(firstKey);
+          }
+          cosmeticsCache.current.set(url, cosmetics);
+        }
+        
+        const { styles, scripts } = cosmetics;
         if (styles?.length) {
           const key = await webview.insertCSS(styles.join('\n'));
           if (key) cosmeticsCssKeyRef.current[tabId] = [key];

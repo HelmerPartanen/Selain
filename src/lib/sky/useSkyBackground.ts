@@ -70,8 +70,8 @@ export const useSkyBackground = (state: SkyStateInput) => {
     const updateSize = () => {
       const bounds = (canvas.parentElement ?? canvas).getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-      // Render at 50% resolution for much better performance
-      const scale = 0.5;
+      // Render at 40% resolution for much better performance
+      const scale = 0.4;
       const width = Math.max(1, Math.floor(bounds.width * dpr * scale));
       const height = Math.max(1, Math.floor(bounds.height * dpr * scale));
       if (width === sizeRef.current.width && height === sizeRef.current.height) return;
@@ -87,9 +87,9 @@ export const useSkyBackground = (state: SkyStateInput) => {
 
       const cloudsCanvas = cloudsCanvasRef.current;
       if (cloudsCanvas) {
-        // Render clouds at 50% resolution for better performance
-        cloudsCanvas.width = Math.floor(width * 0.7);
-        cloudsCanvas.height = Math.floor(height * 0.7);
+        // Render clouds at 35% resolution for better performance
+        cloudsCanvas.width = Math.floor(width * 0.6);
+        cloudsCanvas.height = Math.floor(height * 0.6);
         cloudsCanvas.style.width = `${Math.floor(bounds.width)}px`;
         cloudsCanvas.style.height = `${Math.floor(bounds.height)}px`;
       }
@@ -102,8 +102,8 @@ export const useSkyBackground = (state: SkyStateInput) => {
     let raf = 0;
     let last = performance.now();
     let lastCloudRender = 0;
-    const CLOUD_RENDER_INTERVAL = 50;
-    const FRAME_INTERVAL = 33; // ~30fps cap
+    const CLOUD_RENDER_INTERVAL = 80; // Reduced cloud render frequency
+    const FRAME_INTERVAL = 50; // ~20fps cap for better CPU usage
 
     const animate = (now: number) => {
       raf = window.requestAnimationFrame(animate);

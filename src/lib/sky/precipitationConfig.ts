@@ -156,7 +156,7 @@ export const PRECIPITATION_CONFIG: PrecipitationSystemConfig = {
       angleVarianceDegrees: 5,
       intensityLevels: {
         light: {
-          spawnRate: 80,
+          spawnRate: 40,
           lifetime: 1.2,
           velocity: { y: [1000, 1300] },
           size: [1.0, 1.2],
@@ -164,7 +164,7 @@ export const PRECIPITATION_CONFIG: PrecipitationSystemConfig = {
           description: 'Sparse drizzle, low confidence precipitation'
         },
         moderate: {
-          spawnRate: 160,
+          spawnRate: 90,
           lifetime: 1.0,
           velocity: { y: [1300, 1800] },
           size: [1.0, 1.5],
@@ -172,7 +172,7 @@ export const PRECIPITATION_CONFIG: PrecipitationSystemConfig = {
           description: 'Steady rainfall with clear radar signal'
         },
         heavy: {
-          spawnRate: 300,
+          spawnRate: 160,
           lifetime: 0.9,
           velocity: { y: [1800, 2400] },
           size: [1.2, 1.8],
@@ -188,7 +188,7 @@ export const PRECIPITATION_CONFIG: PrecipitationSystemConfig = {
   rotation: true,
   intensityLevels: {
     light: {
-      spawnRate: 45,
+      spawnRate: 25,
       lifetime: 7.5,
       velocity: { y: [35, 90] },
       size: [0.69, 1.27], 
@@ -197,7 +197,7 @@ export const PRECIPITATION_CONFIG: PrecipitationSystemConfig = {
       description: 'Sparse, floating flakes with high depth ambiguity'
     },
     moderate: {
-      spawnRate: 110,
+      spawnRate: 60,
       lifetime: 8.0,
       velocity: { y: [45, 120] },
       size: [0.86, 1.55], 
@@ -206,7 +206,7 @@ export const PRECIPITATION_CONFIG: PrecipitationSystemConfig = {
       description: 'Layered snowfall with visible depth separation'
     },
     heavy: {
-      spawnRate: 180,
+      spawnRate: 100,
       lifetime: 9.0,
       velocity: { y: [60, 150] },
       size: [0.98, 1.84], 

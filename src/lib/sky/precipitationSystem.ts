@@ -78,18 +78,20 @@ export class PrecipitationSystem {
     this.noiseGenerator.update(deltaTime, this.config.motionNoise.speed);
 
     const dt = Math.min(0.033, deltaTime);
-    const MAX_PARTICLES = 1000;
+    const MAX_PARTICLES = 400;
 
+    // Swap-and-pop removal to avoid O(n²) splice
     let validParticles = 0;
-    for (let i = this.particles.length - 1; i >= 0; i--) {
+    let writeIdx = 0;
+    for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
       p.age += dt;
 
       if (p.age >= p.lifetime || p.y > this.height) {
-        this.particles.splice(i, 1);
         continue;
       }
 
+      this.particles[writeIdx++] = p;
       validParticles++;
 
       p.x += p.vx * dt;
@@ -126,6 +128,7 @@ export class PrecipitationSystem {
 
       p.opacity *= this.config.rendering.softEdges ? fadeMultiplier : 1;
     }
+    this.particles.length = writeIdx;
 
     if (precipitationType !== 'none' && validParticles < MAX_PARTICLES) {
       const actualType = precipitationType === 'storm' ? 'rain' : precipitationType;

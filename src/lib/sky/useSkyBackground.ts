@@ -5,7 +5,6 @@ import { computeSkyLayers } from './skyModel';
 import { mixOklab } from './skyColor';
 import { renderSkyGradient } from './skyRenderer';
 import { PrecipitationSystem, Particle } from './precipitationSystem';
-import { PRECIPITATION_CONFIG } from './precipitationConfig';
 import { SkyCloudsRenderer } from './skyClouds';
 
 const blendLayers = (from: SkyLayerColors, to: SkyLayerColors, t: number): SkyLayerColors => ({
@@ -71,8 +70,10 @@ export const useSkyBackground = (state: SkyStateInput) => {
     const updateSize = () => {
       const bounds = (canvas.parentElement ?? canvas).getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-      const width = Math.max(1, Math.floor(bounds.width * dpr));
-      const height = Math.max(1, Math.floor(bounds.height * dpr));
+      // Render at 50% resolution for much better performance
+      const scale = 0.5;
+      const width = Math.max(1, Math.floor(bounds.width * dpr * scale));
+      const height = Math.max(1, Math.floor(bounds.height * dpr * scale));
       if (width === sizeRef.current.width && height === sizeRef.current.height) return;
       sizeRef.current = { width, height, dpr };
       canvas.width = width;
@@ -87,8 +88,8 @@ export const useSkyBackground = (state: SkyStateInput) => {
       const cloudsCanvas = cloudsCanvasRef.current;
       if (cloudsCanvas) {
         // Render clouds at 50% resolution for better performance
-        cloudsCanvas.width = Math.floor(width * 0.5);
-        cloudsCanvas.height = Math.floor(height * 0.5);
+        cloudsCanvas.width = Math.floor(width * 0.7);
+        cloudsCanvas.height = Math.floor(height * 0.7);
         cloudsCanvas.style.width = `${Math.floor(bounds.width)}px`;
         cloudsCanvas.style.height = `${Math.floor(bounds.height)}px`;
       }
@@ -101,11 +102,17 @@ export const useSkyBackground = (state: SkyStateInput) => {
     let raf = 0;
     let last = performance.now();
     let lastCloudRender = 0;
-    const CLOUD_RENDER_INTERVAL = 300;
+    const CLOUD_RENDER_INTERVAL = 50;
+    const FRAME_INTERVAL = 33; // ~30fps cap
 
     const animate = (now: number) => {
-      const dt = Math.min(33, now - last);
-      last = now;
+      raf = window.requestAnimationFrame(animate);
+
+      const elapsed = now - last;
+      if (elapsed < FRAME_INTERVAL) return;
+
+      const dt = Math.min(50, elapsed);
+      last = now - (elapsed % FRAME_INTERVAL);
 
       const smoothing = 1 - Math.exp(-dt / 400);
       currentRef.current = blendLayers(currentRef.current, targetRef.current, smoothing);
@@ -163,8 +170,6 @@ export const useSkyBackground = (state: SkyStateInput) => {
           cloudsRendererRef.current = null;
         }
       }
-
-      raf = window.requestAnimationFrame(animate);
     };
 
     raf = window.requestAnimationFrame(animate);
@@ -255,18 +260,18 @@ const renderPrecipitation = (
   intensity: 'light' | 'moderate' | 'heavy' = 'moderate',
   skyLayers: SkyLayerColors
 ) => {
-  const config = PRECIPITATION_CONFIG;
   const particles = system.getParticles();
   const canvasHeight = ctx.canvas.height;
 
   if (particles.length === 0) return;
 
-  const previousBlendMode = ctx.globalCompositeOperation;
+  ctx.save();
   ctx.globalCompositeOperation = 'lighten';
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
 
-  for (const particle of particles) {
-    ctx.globalAlpha = 1.0;
-
+  for (let i = 0; i < particles.length; i++) {
+    const particle = particles[i];
     if (particle.type === 'rain') {
       renderRainStreak(ctx, particle, intensity);
     } else {
@@ -274,55 +279,43 @@ const renderPrecipitation = (
     }
   }
 
-  ctx.globalAlpha = 1.0;
-  ctx.globalCompositeOperation = previousBlendMode;
+  ctx.restore();
 };
 
 
 const renderRainStreak = (ctx: CanvasRenderingContext2D, particle: Particle, intensity: 'light' | 'moderate' | 'heavy' = 'moderate') => {
-  
   let streakLength = particle.size * 8;
   if (intensity === 'moderate') streakLength = particle.size * 9;
   if (intensity === 'heavy') streakLength = particle.size * 10;
 
-  ctx.save();
-  ctx.translate(particle.x, particle.y);
-
-  const angle = Math.atan2(particle.vy, particle.vx);
-  ctx.rotate(angle);
-
-  
   let baseOpacity = Math.max(0.4, particle.opacity * 1.5);
-  let rainColor = 'rgba(255, 255, 255,';
   
   switch (intensity) {
     case 'light':
-      
       baseOpacity *= 0.7;
-      rainColor = 'rgba(240, 245, 250,';
-      break;
-    case 'moderate':
-      
-      rainColor = 'rgba(255, 255, 255,';
       break;
     case 'heavy':
-      
       baseOpacity *= 1.2;
-      rainColor = 'rgba(220, 240, 255,';
       break;
   }
 
-  ctx.strokeStyle = `${rainColor} ${baseOpacity})`;
+  // Compute streak endpoints without save/restore/translate/rotate
+  const angle = Math.atan2(particle.vy, particle.vx);
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const half = streakLength / 2;
+  const x1 = particle.x - cos * half;
+  const y1 = particle.y - sin * half;
+  const x2 = particle.x + cos * half;
+  const y2 = particle.y + sin * half;
+
+  ctx.globalAlpha = baseOpacity;
   ctx.lineWidth = Math.max(1.0, particle.size * 1.2);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
 
   ctx.beginPath();
-  ctx.moveTo(-streakLength / 2, 0);
-  ctx.lineTo(streakLength / 2, 0);
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
   ctx.stroke();
-
-  ctx.restore();
 };
 
 
@@ -330,56 +323,24 @@ const renderSnowflake = (
   ctx: CanvasRenderingContext2D, 
   particle: Particle, 
   intensity: 'light' | 'moderate' | 'heavy' = 'moderate',
-  skyLayers: SkyLayerColors,
-  canvasHeight: number
+  _skyLayers: SkyLayerColors,
+  _canvasHeight: number
 ) => {
-  ctx.save();
-  ctx.translate(particle.x, particle.y);
-
-  if (particle.rotation) {
-    ctx.rotate(particle.rotation);
-  }
-
-  
   let opacity = Math.max(0.5, particle.opacity * 1.5);
   
   switch (intensity) {
     case 'light':
-      
       opacity *= 0.8;
       break;
-    case 'moderate':
-      
-      break;
     case 'heavy':
-      
       opacity *= 1.1;
       break;
   }
 
-  
-  const normalizedY = particle.y / canvasHeight;
-  const skyColor = sampleSkyColor(skyLayers, normalizedY);
-  
-  
-  
-  const snowTintFactor = 0.3; 
-  const tintedColor: [number, number, number] = [
-    1.0 - (1.0 - skyColor[0]) * snowTintFactor, 
-    1.0 - (1.0 - skyColor[1]) * snowTintFactor,
-    1.0 - (1.0 - skyColor[2]) * snowTintFactor
-  ];
-
-  
-  const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, particle.size * 2);
-  grad.addColorStop(0, `rgba(${Math.floor(tintedColor[0] * 255)}, ${Math.floor(tintedColor[1] * 255)}, ${Math.floor(tintedColor[2] * 255)}, ${opacity})`);
-  grad.addColorStop(0.6, `rgba(${Math.floor(tintedColor[0] * 255)}, ${Math.floor(tintedColor[1] * 255)}, ${Math.floor(tintedColor[2] * 255)}, ${opacity * 0.6})`);
-  grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-  ctx.fillStyle = grad;
+  // Simple filled circle instead of per-particle radial gradient (massive perf win)
+  ctx.globalAlpha = opacity;
+  ctx.fillStyle = 'rgba(230, 235, 240, 1)';
   ctx.beginPath();
-  ctx.arc(0, 0, particle.size * 2, 0, Math.PI * 2);
+  ctx.arc(particle.x, particle.y, particle.size * 1.5, 0, Math.PI * 2);
   ctx.fill();
-
-  ctx.restore();
 };

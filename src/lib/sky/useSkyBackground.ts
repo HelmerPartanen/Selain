@@ -86,8 +86,9 @@ export const useSkyBackground = (state: SkyStateInput) => {
 
       const cloudsCanvas = cloudsCanvasRef.current;
       if (cloudsCanvas) {
-        cloudsCanvas.width = width;
-        cloudsCanvas.height = height;
+        // Render clouds at 50% resolution for better performance
+        cloudsCanvas.width = Math.floor(width * 0.5);
+        cloudsCanvas.height = Math.floor(height * 0.5);
         cloudsCanvas.style.width = `${Math.floor(bounds.width)}px`;
         cloudsCanvas.style.height = `${Math.floor(bounds.height)}px`;
       }
@@ -250,7 +251,7 @@ const mapPrecipitationToIntensity = (weather: SkyStateInput['weather']): 'light'
 const renderPrecipitation = (
   ctx: CanvasRenderingContext2D,
   system: PrecipitationSystem,
-  precipitationType: 'rain' | 'snow' | 'none',
+  precipitationType: 'rain' | 'snow' | 'none' | 'storm',
   intensity: 'light' | 'moderate' | 'heavy' = 'moderate',
   skyLayers: SkyLayerColors
 ) => {

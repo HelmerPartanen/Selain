@@ -22,7 +22,7 @@ export const IconButton: React.FC<IconButtonProps> = ({ children, className, act
       `}
       {...props}
     >
-      <span className="transition-transform duration-100 ease-out group-active:scale-95">
+      <span className="transition-transform duration-100 ease-out group-active:scale-95 drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]">
         {children}
       </span>
     </button>

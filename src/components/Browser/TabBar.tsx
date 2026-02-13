@@ -38,16 +38,16 @@ export const TabBar = memo<TabBarProps>(({
     switch (tabStyle) {
       case 'underline':
         return isActive
-          ? 'border-b-2 border-[color:var(--ui-accent)] text-[color:var(--ui-text)] rounded-none'
+          ? 'border-b-2 border-[color:var(--ui-accent)] text-[color:var(--ui-text)] rounded-none backdrop-blur-lg'
           : 'text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text)] rounded-none';
       case 'block':
         return isActive
-          ? 'bg-[color:var(--ui-surface)] text-[color:var(--ui-text)] rounded-lg shadow-sm'
+          ? 'bg-[color:var(--ui-surface)] text-[color:var(--ui-text)] rounded-lg shadow-sm backdrop-blur-lg'
           : 'text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text)] hover:bg-[color:var(--ui-hover)] rounded-lg';
       case 'pill':
       default:
         return isActive
-          ? 'bg-[color:var(--ui-surface)] shadow-sm text-[color:var(--ui-text)] rounded-full'
+          ? 'bg-[color:var(--ui-surface)] shadow-sm text-[color:var(--ui-text)] rounded-full backdrop-blur-lg'
           : 'text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text)] rounded-full';
     }
   };

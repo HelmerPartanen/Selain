@@ -5,7 +5,6 @@ import {
   LuPanelLeft,
   LuPlus,
   LuRotateCw,
-  LuShare,
   LuX,
   LuShield
 } from 'react-icons/lu';
@@ -67,41 +66,38 @@ export const BrowserToolbar = memo<BrowserToolbarProps>(
     }, [onShieldRef]);
 
     return (
-      <div className="h-[32px] flex items-center w-full gap-2 electron-no-drag relative">
-        <div className="flex items-center gap-4 min-w-[140px] z-10">
-          <div className="flex items-center gap-1 pl-1">
+      <div className="h-[32px] flex items-center w-full electron-no-drag relative">
+        <div className="flex items-center z-10">
+          <div className="flex items-center gap-0.5 pl-1">
             <IconButton onClick={onSidebarToggle} active={sidebarOpen} aria-label="Toggle sidebar">
-              <LuPanelLeft size={18} />
+              <LuPanelLeft size={16} />
             </IconButton>
             <IconButton disabled={!canGoBack} onClick={onGoBack} aria-label="Back">
-              <LuChevronLeft size={18} />
+              <LuChevronLeft size={16} />
             </IconButton>
             <IconButton disabled={!canGoForward} onClick={onGoForward} aria-label="Forward">
-              <LuChevronRight size={18} />
+              <LuChevronRight size={16} />
             </IconButton>
             <IconButton
               onClick={loading ? onStop : onReload}
               aria-label={loading ? 'Stop loading' : 'Reload'}
             >
-              {loading ? <LuX size={16} /> : <LuRotateCw size={16} />}
+              {loading ? <LuX size={14} /> : <LuRotateCw size={14} />}
             </IconButton>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 min-w-[140px] justify-end ml-auto z-10">
+        <div className="flex items-center gap-0.5 justify-end ml-auto z-10">
           <IconButton onClick={onNewTab} aria-label="New tab">
-            <LuPlus size={16} />
-          </IconButton>
-          <IconButton disabled aria-label="Share (coming soon)">
-            <LuShare size={16} />
+            <LuPlus size={15} />
           </IconButton>
           <div className="relative" ref={shieldRef}>
             <IconButton onClick={onShieldClick} active={shieldActive} aria-label="Privacy shield">
-              <LuShield size={16} />
+              <LuShield size={15} />
             </IconButton>
           </div>
 
-          <div className="ml-2 pl-2 self-start">
+          <div className="ml-1 pl-1 self-start">
             <WindowControls />
           </div>
         </div>

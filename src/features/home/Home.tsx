@@ -52,7 +52,7 @@ const Home: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const [settingsSection, setSettingsSection] = useState<
-    'appearance' | 'general' | 'search' | 'privacy' | 'advanced'
+    'appearance' | 'general' | 'search' | 'privacy' | 'advanced' | 'widgets'
   >('appearance');
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [adBlockOpen, setAdBlockOpen] = useState(false);
@@ -248,10 +248,12 @@ const Home: React.FC = () => {
     });
   }, [requestCloseSettings]);
 
-  const handleOpenSettings = useCallback(() => {
+  const handleOpenSettings = useCallback((section?: string) => {
     setSettingsOpen(true);
     setHistoryOpen(false);
-    setSettingsSection('appearance');
+    if (section) {
+      setSettingsSection(section as any);
+    }
   }, []);
 
   useEffect(() => {
@@ -344,11 +346,11 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     const handleOpenSettingsEvent = (event: Event) => {
-      const custom = event as CustomEvent<{ section?: 'appearance' | 'general' | 'search' | 'privacy' | 'advanced' }>;
+      const custom = event as CustomEvent<{ section?: string }>;
       setSettingsOpen(true);
       setHistoryOpen(false);
       if (custom.detail?.section) {
-        setSettingsSection(custom.detail.section);
+        setSettingsSection(custom.detail.section as any);
       }
     };
     window.addEventListener('browser-open-settings', handleOpenSettingsEvent as EventListener);
@@ -821,6 +823,8 @@ const Home: React.FC = () => {
           onOpenSettings={handleOpenSettings}
           historyActive={historyOpen}
           settingsActive={settingsOpen}
+          settingsSection={settingsSection}
+          adBlockEnabled={adBlockEnabled}
           position="left"
         />
 

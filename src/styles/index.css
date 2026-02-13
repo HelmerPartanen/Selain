@@ -11,6 +11,7 @@
   src: url('/assets/SF-Pro.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 /* =========================
@@ -31,14 +32,9 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-/* Ensure all elements use SF Pro font */
-* {
-  font-family: "SF Pro", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
-}
-
-/* Ensure form elements also use SF Pro */
+/* Font already set on body; inherit everywhere except form elements */
 input, textarea, select, button {
-  font-family: "SF Pro", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+  font-family: inherit;
 }
 
 @layer base {
@@ -416,6 +412,33 @@ input, textarea, select, button {
 
 .electron-no-drag {
   -webkit-app-region: no-drag;
+}
+
+/* =========================
+   Performance: layout containment & GPU hints
+   ========================= */
+
+/* Webviews are heavy — isolate their layout and paint from the rest of the tree */
+webview {
+  contain: strict;
+  will-change: auto;
+}
+
+/* Tab bar items need smooth transitions — hint the compositor */
+[role="tab"] {
+  contain: layout style;
+}
+
+/* Backdrop-filter is very expensive on Chromium; isolate panels into their own layers */
+.widget-panel,
+.widget-card {
+  contain: layout paint;
+  will-change: transform;
+}
+
+/* Sidebar: isolate from main content reflows */
+aside, [data-sidebar] {
+  contain: layout style;
 }
 
 /* =========================

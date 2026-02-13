@@ -3,7 +3,8 @@ import React, {
   useMemo,
   useRef,
   useImperativeHandle,
-  forwardRef
+  forwardRef,
+  memo
 } from 'react';
 import { Tab } from '@/lib/types';
 import { HistoryPage } from './HistoryPage';

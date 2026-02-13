@@ -14,7 +14,7 @@ import { INITIAL_TABS } from '@/lib/constants';
 import { BrowserToolbar } from '@/features/home/components/BrowserToolbar';
 import { UnsavedChangesDialog } from '@/features/home/components/UnsavedChangesDialog';
 import { useSettings } from '@/hooks/useSettings';
-import { useApplyDomSettings, getSetting } from '@/hooks/useLocalSettings';
+import { useApplyDomSettings, getSetting, useSetting } from '@/hooks/useLocalSettings';
 import { WallpaperNotice } from '@/features/home/components/WallpaperNotice';
 import { AdBlockWidget } from '@/features/home/components/AdBlockWidget';
 import { OnboardingFlow } from '@/features/home/components/OnboardingFlow';
@@ -93,8 +93,12 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 const Home: React.FC = () => {
-  const [tabs, setTabs] = useState<Tab[]>(() => getInitialTabs().tabs);
-  const [activeTabId, setActiveTabId] = useState<string>(() => getInitialTabs().activeTabId);
+  // Single call to getInitialTabs (was called twice before)
+  const initRef = useRef<{ tabs: Tab[]; activeTabId: string } | null>(null);
+  if (!initRef.current) initRef.current = getInitialTabs();
+
+  const [tabs, setTabs] = useState<Tab[]>(initRef.current.tabs);
+  const [activeTabId, setActiveTabId] = useState<string>(initRef.current.activeTabId);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [addressBarFocused, setAddressBarFocused] = useState(false);
   const [lastExternalUrlById, setLastExternalUrlById] = useState<Record<string, string>>({});
@@ -151,13 +155,32 @@ const Home: React.FC = () => {
   } = useSettings(DEFAULT_SETTINGS);
 
   // Apply DOM-level settings (font size, reduce motion, animation speed, etc.)
-  const localSettings = useApplyDomSettings();
+  useApplyDomSettings();
 
-  // Persist tabs for session restore
+  // Fine-grained setting subscriptions — each only triggers re-render when its value changes
+  const searchOpenNewTab = useSetting('settings:searchOpenNewTab');
+  const middleClickPaste = useSetting('settings:middleClickPaste');
+  const doubleClickTabClose = useSetting('settings:doubleClickTabClose');
+  const tabStyle = useSetting('settings:tabStyle');
+  const tabHoverPreview = useSetting('settings:tabHoverPreview');
+  const sidebarPosition = useSetting('settings:sidebarPosition');
+  const searchSuggestions = useSetting('settings:searchSuggestions');
+  const searchHistory = useSetting('settings:searchHistory');
+  const confirmBeforeClose = useSetting('settings:confirmBeforeClose');
+  const clearOnExit = useSetting('settings:clearOnExit');
+
+  // Persist tabs for session restore (debounced to avoid thrashing on rapid tab updates)
+  const saveTabTimerRef = useRef<number | null>(null);
   useEffect(() => {
     if (getSetting('settings:restoreTabs') || getSetting('settings:startupPage') === 'restoreSession') {
-      saveTabState(tabs, activeTabId);
+      if (saveTabTimerRef.current) clearTimeout(saveTabTimerRef.current);
+      saveTabTimerRef.current = window.setTimeout(() => {
+        saveTabState(tabs, activeTabId);
+      }, 500);
     }
+    return () => {
+      if (saveTabTimerRef.current) clearTimeout(saveTabTimerRef.current);
+    };
   }, [tabs, activeTabId]);
 
   const activeTab = useMemo(
@@ -171,9 +194,12 @@ const Home: React.FC = () => {
   
   // Optimize topSites calculation with better memoization key
   const historyKey = useMemo(() => historyItems.length, [historyItems.length]);
+  const historyRef = useRef(historyItems);
+  historyRef.current = historyItems;
   const topSites = useMemo(() => {
     // Only recalculate when history length changes significantly
-    if (historyItems.length === 0) return [];
+    const items = historyRef.current;
+    if (items.length === 0) return [];
     
     const byHost = new Map<
       string,
@@ -181,7 +207,7 @@ const Home: React.FC = () => {
     >();
     
     // Process only recent history items for better performance
-    const recentItems = historyItems.slice(0, Math.min(100, historyItems.length));
+    const recentItems = items.slice(0, Math.min(100, items.length));
     
     recentItems.forEach((item) => {
       if (!item.url || item.url.startsWith('browser://')) return;
@@ -221,7 +247,7 @@ const Home: React.FC = () => {
         hint: 'Top site' as const,
         type: 'top' as const
       }));
-  }, [historyKey, historyItems]);
+  }, [historyKey]);
   const canGoBack = Boolean(
     activeTab?.canGoBack ||
       (activeTab
@@ -778,21 +804,33 @@ const Home: React.FC = () => {
     }, 1000);
   }, [onboardingOpen]);
 
+  // Use refs for keyboard shortcut handlers to avoid recreating the listener
+  const tabsRef = useRef(tabs);
+  const activeTabIdRef = useRef(activeTabId);
+  const handleNewTabRef = useRef(handleNewTab);
+  const handleCloseTabRef = useRef(handleCloseTab);
+  tabsRef.current = tabs;
+  activeTabIdRef.current = activeTabId;
+  handleNewTabRef.current = handleNewTab;
+  handleCloseTabRef.current = handleCloseTab;
+
   
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       
       if (event.ctrlKey && event.key === 't') {
         event.preventDefault();
-        handleNewTab();
+        handleNewTabRef.current();
         setTimeout(() => window.dispatchEvent(new CustomEvent('browser-focus-address-bar')), 100);
       }
       
       else if (event.ctrlKey && event.key === 'w') {
         event.preventDefault();
-        const activeTab = tabs.find(tab => tab.id === activeTabId);
-        if (activeTab && tabs.length > 1) {
-          handleCloseTab(activeTab.id);
+        const currentTabs = tabsRef.current;
+        const currentActiveId = activeTabIdRef.current;
+        const activeTab = currentTabs.find(tab => tab.id === currentActiveId);
+        if (activeTab && currentTabs.length > 1) {
+          handleCloseTabRef.current(activeTab.id);
         }
       }
       
@@ -818,11 +856,11 @@ const Home: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown, { capture: true });
     return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
-  }, [tabs, activeTabId, handleNewTab, handleCloseTab]);
+  }, []); // Stable — uses refs for all mutable deps
 
   // Confirm-before-close: add beforeunload handler
   useEffect(() => {
-    if (!localSettings['settings:confirmBeforeClose']) return;
+    if (!confirmBeforeClose) return;
     const handler = (e: BeforeUnloadEvent) => {
       if (tabs.length > 1) {
         e.preventDefault();
@@ -831,11 +869,11 @@ const Home: React.FC = () => {
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [localSettings['settings:confirmBeforeClose'], tabs.length]);
+  }, [confirmBeforeClose, tabs.length]);
 
   // Clear-on-exit: register cleanup when window closes
   useEffect(() => {
-    if (!localSettings['settings:clearOnExit']) return;
+    if (!clearOnExit) return;
     const handler = () => {
       try {
         // Clear browsing-related data
@@ -850,7 +888,7 @@ const Home: React.FC = () => {
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [localSettings['settings:clearOnExit']]);
+  }, [clearOnExit]);
 
   return (
       <div className="relative isolate flex h-screen w-screen flex-col overflow-hidden text-sm select-none font-sans text-[color:var(--ui-text)] bg-[color:var(--ui-base)]">
@@ -898,9 +936,9 @@ const Home: React.FC = () => {
                 loading={activeTab.loading}
                 searchEngine={searchEngine}
                 customSearchUrl={customSearchUrl}
-                openInNewTab={localSettings['settings:searchOpenNewTab']}
+                openInNewTab={searchOpenNewTab}
                 onOpenNewTab={handleOpenNewTab}
-                middleClickPaste={localSettings['settings:middleClickPaste']}
+                middleClickPaste={middleClickPaste}
               />
             </div>
           </div>
@@ -917,9 +955,9 @@ const Home: React.FC = () => {
             activeTabId={activeTabId}
             onSwitch={handleSwitchTab}
             onClose={handleCloseTab}
-            doubleClickClose={localSettings['settings:doubleClickTabClose']}
-            tabStyle={localSettings['settings:tabStyle']}
-            tabHoverPreview={localSettings['settings:tabHoverPreview']}
+            doubleClickClose={doubleClickTabClose}
+            tabStyle={tabStyle}
+            tabHoverPreview={tabHoverPreview}
           />
         </div>
       </div>
@@ -933,7 +971,7 @@ const Home: React.FC = () => {
           settingsActive={settingsOpen}
           settingsSection={settingsSection}
           adBlockEnabled={adBlockEnabled}
-          position={localSettings['settings:sidebarPosition']}
+          position={sidebarPosition}
         />
 
         <main className="flex-1 relative bg-transparent overflow-hidden rounded-t-xl">
@@ -1028,8 +1066,8 @@ const Home: React.FC = () => {
               historyItems={historyItems}
               historySorted={historySorted}
               topSites={topSites}
-              searchSuggestionsEnabled={localSettings['settings:searchSuggestions']}
-              searchHistoryEnabled={localSettings['settings:searchHistory']}
+              searchSuggestionsEnabled={searchSuggestions}
+              searchHistoryEnabled={searchHistory}
             />
           </div>
         </div>

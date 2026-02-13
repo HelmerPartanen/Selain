@@ -27,15 +27,23 @@ export const useWebviewManager = ({
   const cosmeticsCache = useRef<Map<string, { styles: string[], scripts: string[] }>>(new Map());
   const COSMETICS_CACHE_MAX = 50;
 
+  // Use refs for callbacks to stabilize attachWebview
+  const onTabUpdateRef = useRef(onTabUpdate);
+  const onHistoryEntryRef = useRef(onHistoryEntry);
+  const onOpenNewTabRef = useRef(onOpenNewTab);
+  onTabUpdateRef.current = onTabUpdate;
+  onHistoryEntryRef.current = onHistoryEntry;
+  onOpenNewTabRef.current = onOpenNewTab;
+
   const updateNavState = useCallback(
     (tabId: string, webview: WebviewTag | null) => {
       if (!webview) return;
-      onTabUpdate(tabId, {
+      onTabUpdateRef.current(tabId, {
         canGoBack: webview.canGoBack(),
         canGoForward: webview.canGoForward()
       });
     },
-    [onTabUpdate]
+    []
   );
 
   const applyCosmetics = useCallback(
@@ -84,8 +92,14 @@ export const useWebviewManager = ({
     []
   );
 
+  // Cache ref callbacks per tabId to avoid unmount/remount on every render
+  const refCallbackCache = useRef<Record<string, (el: WebviewTag | null) => void>>({});
+
   const attachWebview = useCallback(
-    (tabId: string) => (el: WebviewTag | null) => {
+    (tabId: string) => {
+      if (refCallbackCache.current[tabId]) return refCallbackCache.current[tabId];
+
+      const refCallback = (el: WebviewTag | null) => {
       if (cleanupRef.current[tabId]) {
         cleanupRef.current[tabId]?.();
         cleanupRef.current[tabId] = undefined;
@@ -125,9 +139,9 @@ export const useWebviewManager = ({
         }
       } catch {}
 
-      const handleStart = () => onTabUpdate(tabId, { loading: true });
+      const handleStart = () => onTabUpdateRef.current(tabId, { loading: true });
       const handleStop = () => {
-        onTabUpdate(tabId, { loading: false });
+        onTabUpdateRef.current(tabId, { loading: false });
         updateNavState(tabId, el);
         const url = el.getURL?.();
         if (!url || url.startsWith('browser://')) return;
@@ -136,13 +150,13 @@ export const useWebviewManager = ({
         const key = `${url}|${title}`;
         if (lastHistoryKeyRef.current[tabId] === key) return;
         lastHistoryKeyRef.current[tabId] = key;
-        onHistoryEntry?.({ url, title: title || url });
+        onHistoryEntryRef.current?.({ url, title: title || url });
       };
       const handleTitle = (event: any) =>
-        onTabUpdate(tabId, { title: event?.title || 'New Tab' });
+        onTabUpdateRef.current(tabId, { title: event?.title || 'New Tab' });
       const handleFavicon = (event: any) => {
         const favicon = event?.favicons?.[0];
-        if (favicon) onTabUpdate(tabId, { favicon });
+        if (favicon) onTabUpdateRef.current(tabId, { favicon });
       };
       const handleNavigate = (event: any) => {
         const now = Date.now();
@@ -157,7 +171,7 @@ export const useWebviewManager = ({
             try { el.loadURL(httpsUrl); } catch {}
             return;
           }
-          onTabUpdate(tabId, { url: event.url });
+          onTabUpdateRef.current(tabId, { url: event.url });
         }
         updateNavState(tabId, el);
         if (event?.url) applyCosmetics(tabId, el, event.url);
@@ -293,7 +307,7 @@ export const useWebviewManager = ({
           event.preventDefault();
         }
         // Respect openLinksInNewTab setting — always open in new tab if enabled
-        if (url) onOpenNewTab?.(url);
+        if (url) onOpenNewTabRef.current?.(url);
       };
 
       el.addEventListener('did-start-loading', handleStart);
@@ -321,8 +335,12 @@ export const useWebviewManager = ({
         el.removeEventListener('focus', handleWebviewFocus);
         el.removeEventListener('new-window', handleNewWindow);
       };
+      };
+
+      refCallbackCache.current[tabId] = refCallback;
+      return refCallback;
     },
-    [applyCosmetics, onHistoryEntry, onOpenNewTab, onTabUpdate, updateNavState]
+    [applyCosmetics, updateNavState]
   );
 
   useEffect(() => {
@@ -340,24 +358,30 @@ export const useWebviewManager = ({
     };
   }, []);
 
-  
+  // Pause/resume webviews — only when active tab changes, not on every tabs update
+  const prevActiveTabIdRef = useRef<string | null>(null);
   useEffect(() => {
-    tabs.forEach(tab => {
-      const webview = webviewsRef.current[tab.id];
-      if (!webview) return;
-      if (tab.id === activeTabId) {
-        
+    const prevId = prevActiveTabIdRef.current;
+    prevActiveTabIdRef.current = activeTabId;
+
+    // Pause previous active tab
+    if (prevId && prevId !== activeTabId) {
+      const prevWebview = webviewsRef.current[prevId];
+      if (prevWebview) {
         try {
-          if (typeof (webview as any).resume === 'function') (webview as any).resume();
-        } catch {}
-      } else {
-        
-        try {
-          if (typeof (webview as any).pause === 'function') (webview as any).pause();
+          if (typeof (prevWebview as any).pause === 'function') (prevWebview as any).pause();
         } catch {}
       }
-    });
-  }, [tabs, activeTabId]);
+    }
+
+    // Resume new active tab
+    const activeWebview = webviewsRef.current[activeTabId];
+    if (activeWebview) {
+      try {
+        if (typeof (activeWebview as any).resume === 'function') (activeWebview as any).resume();
+      } catch {}
+    }
+  }, [activeTabId]);
 
   return { attachWebview };
 };

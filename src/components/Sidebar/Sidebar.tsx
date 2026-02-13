@@ -162,7 +162,7 @@ export const Sidebar = memo(
           isOpen
             ? "h-[calc(100%-1rem)] w-[220px] translate-x-0 opacity-100 rounded-2xl my-2 mx-2 shadow-[var(--shadow-lg)]"
             : [
-                "h-[calc(100%-1rem)] w-0 opacity-0 pointer-events-none overflow-hidden rounded-2xl my-2 mx-0",
+                "h-0 w-0 opacity-0 pointer-events-none overflow-hidden rounded-2xl m-0 p-0 border-0",
                 isRight ? "translate-x-4" : "-translate-x-4",
               ].join(" "),
         ].join(" ")}

@@ -80,7 +80,7 @@ export const SettingsPage = memo(({
         {/* Scrollable content */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-8 pb-28"
+          className="flex-1 overflow-y-auto px-8 pb-8"
         >
           <div className="max-w-3xl mx-auto w-full">
             {activeSection === 'appearance' && (
@@ -118,15 +118,15 @@ export const SettingsPage = memo(({
           </div>
         </div>
 
-        {/* Save bar — always mounted, animated via CSS transitions */}
+        {/* Save bar — pinned to bottom of settings card */}
         <div
-          className={`absolute bottom-5 left-1/2 -translate-x-1/2 z-10 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          className={`shrink-0 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             hasUnsavedChanges
-              ? 'opacity-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 translate-y-3 pointer-events-none'
+              ? 'max-h-16 opacity-100'
+              : 'max-h-0 opacity-0'
           }`}
         >
-          <div className="flex items-center gap-3 rounded-full bg-[color:var(--ui-surface)] border border-[color:var(--ui-border)] px-5 py-2.5 shadow-[var(--shadow-lg)] backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-3 border-t border-[color:var(--ui-border)] px-8 py-3">
             <span className="text-xs text-[color:var(--ui-text-muted)]">
               Unsaved changes
             </span>

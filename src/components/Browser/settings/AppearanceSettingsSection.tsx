@@ -1,7 +1,26 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { solidColorOptions, DEFAULT_WALLPAPER_COLOR } from '@/lib/appearance';
 import { SettingsGroup } from './SettingsGroup';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
+
+const UI_DENSITY_KEY = 'settings:uiDensity';
+const ANIMATION_SPEED_KEY = 'settings:animationSpeed';
+const SHOW_CLOCK_KEY = 'settings:showClock';
+const CLOCK_FORMAT_KEY = 'settings:clockFormat';
+const SHOW_WEATHER_KEY = 'settings:showWeather';
+const SHOW_GREETING_KEY = 'settings:showGreeting';
+const TOOLBAR_TRANSPARENCY_KEY = 'settings:toolbarTransparency';
+const ROUNDED_CORNERS_KEY = 'settings:roundedCorners';
+const TAB_STYLE_KEY = 'settings:tabStyle';
+
+const storageGet = (key: string, fallback: any) => {
+  try {
+    const v = localStorage.getItem(key);
+    return v !== null ? JSON.parse(v) : fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 interface AppearanceSettingsSectionProps {
   wallpaper: string;
@@ -32,13 +51,34 @@ export const AppearanceSettingsSection: React.FC<
   const activeColor =
     backgroundType === 'solid' ? wallpaperColor : '';
 
+  const persist = useCallback((key: string, value: any) => {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  }, []);
+
+  const [uiDensity, setUiDensity] = useState<'compact' | 'comfortable' | 'spacious'>(() =>
+    (localStorage.getItem(UI_DENSITY_KEY) as any) || 'comfortable'
+  );
+  const [animationSpeed, setAnimationSpeed] = useState<'none' | 'fast' | 'normal' | 'slow'>(() =>
+    (localStorage.getItem(ANIMATION_SPEED_KEY) as any) || 'normal'
+  );
+  const [showClock, setShowClock] = useState(() => storageGet(SHOW_CLOCK_KEY, true));
+  const [clockFormat, setClockFormat] = useState<'12h' | '24h'>(() =>
+    (localStorage.getItem(CLOCK_FORMAT_KEY) as any) || '24h'
+  );
+  const [showWeather, setShowWeather] = useState(() => storageGet(SHOW_WEATHER_KEY, true));
+  const [showGreeting, setShowGreeting] = useState(() => storageGet(SHOW_GREETING_KEY, true));
+  const [toolbarTransparency, setToolbarTransparency] = useState(() => storageGet(TOOLBAR_TRANSPARENCY_KEY, true));
+  const [roundedCorners, setRoundedCorners] = useState(() => storageGet(ROUNDED_CORNERS_KEY, true));
+  const [tabStyle, setTabStyle] = useState<'pill' | 'underline' | 'block'>(() =>
+    (localStorage.getItem(TAB_STYLE_KEY) as any) || 'pill'
+  );
+
   return (
-    <div className="space-y-6 overflow-x-hidden">
+    <div className="space-y-8 overflow-x-hidden">
+      {/* Background */}
       <SettingsGroup title="Background">
-        {}
-        <div className="py-8 overflow-x-hidden">
-          <div className="mx-auto max-w-5xl space-y-8">
-            {}
+        <div className="py-4 overflow-x-hidden">
+          <div className="mx-auto max-w-5xl space-y-6">
             <div className="flex items-center justify-between gap-4">
               <div className="w-[120px]" />
 
@@ -79,7 +119,6 @@ export const AppearanceSettingsSection: React.FC<
               </div>
             </div>
 
-            {}
             <div className="mx-auto w-full max-w-2xl overflow-x-hidden">
               <div className="relative isolate aspect-video overflow-hidden rounded-3xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface-subtle)]">
                 {activeWallpaper ? (
@@ -111,7 +150,6 @@ export const AppearanceSettingsSection: React.FC<
               </div>
             </div>
 
-            {}
             <div className="space-y-6">
               {backgroundType === 'wallpaper' && (
                 <div className="mx-auto flex max-w-md items-center justify-center gap-3">
@@ -182,6 +220,162 @@ export const AppearanceSettingsSection: React.FC<
           </div>
         </div>
       </SettingsGroup>
+
+      {/* UI Chrome */}
+      <SettingsGroup title="Interface Chrome" description="Customize the browser window appearance.">
+        <div className="space-y-2">
+          <SettingToggle
+            label="Transparent toolbar"
+            desc="Make the toolbar blend with the background."
+            checked={toolbarTransparency}
+            onChange={(v) => { setToolbarTransparency(v); persist(TOOLBAR_TRANSPARENCY_KEY, v); }}
+          />
+          <SettingToggle
+            label="Rounded corners"
+            desc="Use rounded corners throughout the interface."
+            checked={roundedCorners}
+            onChange={(v) => { setRoundedCorners(v); persist(ROUNDED_CORNERS_KEY, v); }}
+          />
+          <div className="rounded-xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface)] px-4 py-3">
+            <div className="text-sm font-medium text-[color:var(--ui-text)]">Tab style</div>
+            <div className="text-xs text-[color:var(--ui-text-muted)] mb-2">Choose how active tabs are indicated.</div>
+            <div className="flex gap-2">
+              {([
+                { id: 'pill' as const, label: 'Pill' },
+                { id: 'underline' as const, label: 'Underline' },
+                { id: 'block' as const, label: 'Block' },
+              ]).map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => { setTabStyle(opt.id); localStorage.setItem(TAB_STYLE_KEY, opt.id); }}
+                  className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150
+                    ${tabStyle === opt.id
+                      ? 'bg-[color:var(--ui-accent)] text-[color:var(--ui-accent-contrast)] shadow-sm'
+                      : 'bg-[color:var(--ui-hover)] text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text)]'
+                    }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface)] px-4 py-3">
+            <div className="text-sm font-medium text-[color:var(--ui-text)]">UI density</div>
+            <div className="text-xs text-[color:var(--ui-text-muted)] mb-2">Adjust spacing throughout the interface.</div>
+            <div className="flex gap-2">
+              {([
+                { id: 'compact' as const, label: 'Compact' },
+                { id: 'comfortable' as const, label: 'Comfortable' },
+                { id: 'spacious' as const, label: 'Spacious' },
+              ]).map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => { setUiDensity(opt.id); localStorage.setItem(UI_DENSITY_KEY, opt.id); }}
+                  className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150
+                    ${uiDensity === opt.id
+                      ? 'bg-[color:var(--ui-accent)] text-[color:var(--ui-accent-contrast)] shadow-sm'
+                      : 'bg-[color:var(--ui-hover)] text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text)]'
+                    }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </SettingsGroup>
+
+      {/* New Tab Page */}
+      <SettingsGroup title="New Tab Page" description="Customize what shows on new tabs.">
+        <div className="space-y-2">
+          <SettingToggle
+            label="Show clock"
+            desc="Display a clock on the new tab page."
+            checked={showClock}
+            onChange={(v) => { setShowClock(v); persist(SHOW_CLOCK_KEY, v); }}
+          />
+          {showClock && (
+            <div className="rounded-xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface)] px-4 py-3">
+              <div className="text-sm font-medium text-[color:var(--ui-text)]">Clock format</div>
+              <div className="text-xs text-[color:var(--ui-text-muted)] mb-2">Choose between 12-hour and 24-hour clock.</div>
+              <div className="flex gap-2">
+                {([
+                  { id: '12h' as const, label: '12-hour' },
+                  { id: '24h' as const, label: '24-hour' },
+                ]).map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => { setClockFormat(opt.id); localStorage.setItem(CLOCK_FORMAT_KEY, opt.id); }}
+                    className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150
+                      ${clockFormat === opt.id
+                        ? 'bg-[color:var(--ui-accent)] text-[color:var(--ui-accent-contrast)] shadow-sm'
+                        : 'bg-[color:var(--ui-hover)] text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text)]'
+                      }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <SettingToggle
+            label="Show weather"
+            desc="Display current weather conditions on the new tab page."
+            checked={showWeather}
+            onChange={(v) => { setShowWeather(v); persist(SHOW_WEATHER_KEY, v); }}
+          />
+          <SettingToggle
+            label="Show greeting"
+            desc="Display a time-based greeting message."
+            checked={showGreeting}
+            onChange={(v) => { setShowGreeting(v); persist(SHOW_GREETING_KEY, v); }}
+          />
+        </div>
+      </SettingsGroup>
+
+      {/* Animations */}
+      <SettingsGroup title="Animations" description="Control transitions and motion effects.">
+        <div className="rounded-xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface)] px-4 py-3">
+          <div className="text-sm font-medium text-[color:var(--ui-text)]">Animation speed</div>
+          <div className="text-xs text-[color:var(--ui-text-muted)] mb-2">Adjust the speed of UI transitions.</div>
+          <div className="flex gap-2">
+            {([
+              { id: 'none' as const, label: 'Off' },
+              { id: 'fast' as const, label: 'Fast' },
+              { id: 'normal' as const, label: 'Normal' },
+              { id: 'slow' as const, label: 'Slow' },
+            ]).map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => { setAnimationSpeed(opt.id); localStorage.setItem(ANIMATION_SPEED_KEY, opt.id); }}
+                className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all duration-150
+                  ${animationSpeed === opt.id
+                    ? 'bg-[color:var(--ui-accent)] text-[color:var(--ui-accent-contrast)] shadow-sm'
+                    : 'bg-[color:var(--ui-hover)] text-[color:var(--ui-text-muted)] hover:text-[color:var(--ui-text)]'
+                  }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </SettingsGroup>
     </div>
   );
 };
+
+/* ── Reusable toggle row ─────── */
+const SettingToggle: React.FC<{
+  label: string;
+  desc: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}> = ({ label, desc, checked, onChange }) => (
+  <div className="flex items-center justify-between rounded-xl border border-[color:var(--ui-border)] bg-[color:var(--ui-surface)] px-4 py-3">
+    <div className="pr-4">
+      <div className="text-sm font-medium text-[color:var(--ui-text)]">{label}</div>
+      <div className="text-xs text-[color:var(--ui-text-muted)]">{desc}</div>
+    </div>
+    <ToggleSwitch checked={checked} onChange={onChange} ariaLabel={label} />
+  </div>
+);

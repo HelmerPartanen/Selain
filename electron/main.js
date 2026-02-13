@@ -8,19 +8,17 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Performance optimizations
-app.commandLine.appendSwitch('renderer-process-limit', '8');
+// Performance & memory optimizations
+app.commandLine.appendSwitch('renderer-process-limit', '4');
 app.commandLine.appendSwitch('enable-v8-code-caching');
-app.commandLine.appendSwitch('enable-preconnect');
+app.commandLine.appendSwitch('process-per-site');
 app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiIgnoreDriverChecks');
 app.commandLine.appendSwitch('disable-features', 'UseChromeOSDirectVideoDecoder');
 app.commandLine.appendSwitch('autoplay-policy', 'user-gesture-required');
-app.commandLine.appendSwitch('disable-background-timer-throttling');
-app.commandLine.appendSwitch('disable-renderer-backgrounding');
-app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 app.commandLine.appendSwitch('enable-parallel-downloading');
 app.commandLine.appendSwitch('enable-quic');
-app.commandLine.appendSwitch('network-quality-estimator-set-max-quality', 'Slow-2G');
+app.commandLine.appendSwitch('disk-cache-size', '52428800');
+app.commandLine.appendSwitch('js-flags', '--optimize-for-size');
 
 const isDev = !app.isPackaged;
 
@@ -104,7 +102,7 @@ class LRUCache {
   }
 }
 
-const adblockCache = new LRUCache(2000);
+const adblockCache = new LRUCache(500);
 
 // Batch history writes
 let historyWriteTimer = null;
@@ -317,6 +315,7 @@ const createWindow = async () => {
       contextIsolation: true,
       nodeIntegration: false,
       webviewTag: true,
+      backgroundThrottling: true,
       disableBlinkFeatures: 'AutomationControlled',
       enableBlinkFeatures: ''
     }
@@ -687,6 +686,9 @@ app.whenReady().then(async () => {
     });
 
     if (contents.getType() === 'webview') {
+      // Enable background throttling for webview processes to reduce memory
+      contents.setBackgroundThrottling(true);
+
       contents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
         const isAborted = errorCode === -3 || errorCode === 'ERR_ABORTED';
         if (isAborted) return;

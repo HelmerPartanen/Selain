@@ -25,7 +25,7 @@ export const useWebviewManager = ({
   const lastNavigateTimeRef = useRef<Record<string, number>>({});
   const NAVIGATE_THROTTLE_MS = 500;
   const cosmeticsCache = useRef<Map<string, { styles: string[], scripts: string[] }>>(new Map());
-  const COSMETICS_CACHE_MAX = 50;
+  const COSMETICS_CACHE_MAX = 20;
 
   // Use refs for callbacks to stabilize attachWebview
   const onTabUpdateRef = useRef(onTabUpdate);
@@ -358,30 +358,59 @@ export const useWebviewManager = ({
     };
   }, []);
 
-  // Pause/resume webviews — only when active tab changes, not on every tabs update
+  // Suspend/resume webviews — pause media and mute background tabs to save memory
   const prevActiveTabIdRef = useRef<string | null>(null);
   useEffect(() => {
     const prevId = prevActiveTabIdRef.current;
     prevActiveTabIdRef.current = activeTabId;
 
-    // Pause previous active tab
+    // Suspend previous active tab: pause media + mute audio
     if (prevId && prevId !== activeTabId) {
       const prevWebview = webviewsRef.current[prevId];
       if (prevWebview) {
         try {
-          if (typeof (prevWebview as any).pause === 'function') (prevWebview as any).pause();
+          prevWebview.executeJavaScript(
+            `document.querySelectorAll('video, audio').forEach(function(el) {
+              if (!el.paused) { el.dataset._wasBgPaused = '1'; el.pause(); }
+            });`,
+            true
+          ).catch(() => {});
+          if (typeof (prevWebview as any).setAudioMuted === 'function') {
+            (prevWebview as any).setAudioMuted(true);
+          }
         } catch {}
       }
     }
 
-    // Resume new active tab
-    const activeWebview = webviewsRef.current[activeTabId];
-    if (activeWebview) {
+    // Resume new active tab: unmute audio
+    const activeWv = webviewsRef.current[activeTabId];
+    if (activeWv) {
       try {
-        if (typeof (activeWebview as any).resume === 'function') (activeWebview as any).resume();
+        if (typeof (activeWv as any).setAudioMuted === 'function') {
+          (activeWv as any).setAudioMuted(false);
+        }
       } catch {}
     }
   }, [activeTabId]);
+
+  // Clean up closed tabs from caches to prevent memory leaks
+  useEffect(() => {
+    const validIds = new Set(tabs.map(t => t.id));
+    for (const id of Object.keys(refCallbackCache.current)) {
+      if (!validIds.has(id)) {
+        if (cleanupRef.current[id]) {
+          try { cleanupRef.current[id]?.(); } catch {}
+          delete cleanupRef.current[id];
+        }
+        delete refCallbackCache.current[id];
+        delete webviewsRef.current[id];
+        delete cosmeticsUrlRef.current[id];
+        delete cosmeticsCssKeyRef.current[id];
+        delete lastHistoryKeyRef.current[id];
+        delete lastNavigateTimeRef.current[id];
+      }
+    }
+  }, [tabs]);
 
   return { attachWebview };
 };

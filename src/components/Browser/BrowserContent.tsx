@@ -1,5 +1,6 @@
 import React, {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useImperativeHandle,
@@ -58,6 +59,25 @@ export const BrowserContent = forwardRef<BrowserContentHandle, BrowserContentPro
       onOpenNewTab
     });
     const isElectron = useMemo(() => isElectronRuntime(), []);
+
+    // Tab discarding: only keep MAX_LIVE_WEBVIEWS webviews alive to save memory.
+    // Inactive tabs beyond this limit have their webview destroyed and reload when switched to.
+    const MAX_LIVE_WEBVIEWS = 3;
+    const recentTabIdsRef = useRef<string[]>([activeTabId]);
+
+    useEffect(() => {
+      const validIds = new Set(tabs.map(t => t.id));
+      recentTabIdsRef.current = [
+        activeTabId,
+        ...recentTabIdsRef.current.filter(id => id !== activeTabId && validIds.has(id))
+      ].slice(0, MAX_LIVE_WEBVIEWS);
+    }, [activeTabId, tabs]);
+
+    const liveTabIds = useMemo(() => {
+      const validIds = new Set(tabs.map(t => t.id));
+      const recent = [activeTabId, ...recentTabIdsRef.current.filter(id => id !== activeTabId)];
+      return [...new Set(recent)].filter(id => validIds.has(id)).slice(0, MAX_LIVE_WEBVIEWS);
+    }, [tabs, activeTabId]);
 
     const activeWebview = useCallback(() => {
       return webviewsRef.current[activeTabId] || null;
@@ -127,6 +147,10 @@ export const BrowserContent = forwardRef<BrowserContentHandle, BrowserContentPro
           }
 
           if (!isElectron) return null;
+
+          // Only render webview for live tabs (active + recently used)
+          // Discarded tabs will reload when switched to, saving hundreds of MB per tab
+          if (!liveTabIds.includes(tab.id)) return null;
 
           return (
             <div
